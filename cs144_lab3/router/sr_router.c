@@ -171,16 +171,16 @@ void sr_handlepacket(struct sr_instance *sr,
    */
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
   uint16_t ethernet_type = ethertype((uint8_t *) ethernet_header);
-
-  /* Checks if it is an ARP packet */
-  if (ethernet_type == ethertype_arp) {
-    printf("Found ARP Packet!\n");
-    sr_handle_arp_packet(sr, packet, len, interface);
-  }
   
   /* Checks if it is an IP packet */
-  else if (ethernet_type == ethertype_ip) {
+  if (ethernet_type == ethertype_ip) {
     printf("Found IP packet!\n");
+  }
+
+  /* Checks if it is an ARP packet */
+  else if (ethernet_type == ethertype_arp) {
+    printf("Found ARP Packet!\n");
+    sr_handle_arp_packet(sr, packet, len, interface);
   }
 
   else {
