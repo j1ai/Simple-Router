@@ -77,8 +77,6 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
     printf("Received ARP request packet!\n");
 
     /* Check if it is targetted to the router */
-    struct sr_if *hehe = sr_get_wasd(sr, arp_header->ar_tip);
-    printf("wasd: %s\n", hehe->name);
     unsigned char *router_ether_add = sr_get_ether_addr(sr, arp_header->ar_tip);
 
     /* If the entry is not there */
@@ -112,7 +110,9 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       print_hdrs(new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
 
       /* Return a ARP reply */
-      sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface);
+      if (sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface) == 0) {
+        printf("Sending packet unsuccessful\n");
+      }
 
       free(router_ether_add);
       free(new_packet);
