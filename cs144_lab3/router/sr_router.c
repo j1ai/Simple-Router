@@ -77,6 +77,8 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
     printf("Received ARP request packet!\n");
 
     /* Check if it is targetted to the router */
+    struct sr_if *hehe = sr_get_wasd(sr, arp_header->ar_tip);
+    printf("wasd: %s\n", hehe->name);
     unsigned char *router_ether_add = sr_get_ether_addr(sr, arp_header->ar_tip);
 
     /* If the entry is not there */
@@ -152,8 +154,6 @@ void sr_handlepacket(struct sr_instance *sr,
   assert(sr);
   assert(packet);
   assert(interface);
-
-  printf("Interface %s\n", interface);
 
   printf("*** -> Received packet of length %d \n",len);
 

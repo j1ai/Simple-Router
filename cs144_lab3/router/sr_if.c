@@ -151,7 +151,7 @@ void sr_set_ether_ip(struct sr_instance* sr, uint32_t ip_nbo)
  * need to free the resources after that
  *
  *---------------------------------------------------------------------*/
-unsigned char *sr_get_ether_addr(struct sr_instance* sr, uint32_t ip) 
+unsigned char *sr_get_ether_addr(struct sr_instance *sr, uint32_t ip) 
 {
     assert(sr->if_list);
 
@@ -161,6 +161,21 @@ unsigned char *sr_get_ether_addr(struct sr_instance* sr, uint32_t ip)
             unsigned char *ether_addr = malloc(sizeof(unsigned char) * ETHER_ADDR_LEN);
             memcpy(ether_addr, if_walker->addr,ETHER_ADDR_LEN);
             return ether_addr;
+        }
+
+        if_walker = if_walker->next;
+    }
+    return NULL;
+}
+
+struct sr_if *sr_get_wasd(struct sr_instance *sr, uint32_t ip)
+{
+    assert(sr->if_list);
+
+    struct sr_if *if_walker = sr->if_list;
+    while (if_walker != NULL) {
+        if (if_walker->ip == ip) {
+            return if_walker;
         }
 
         if_walker = if_walker->next;
