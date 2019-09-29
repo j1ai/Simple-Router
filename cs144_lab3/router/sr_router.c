@@ -106,7 +106,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       new_packet_arp_headers->ar_pln = arp_header->ar_pln;
       new_packet_arp_headers->ar_op = arp_op_reply;
       memcpy(new_packet_arp_headers->ar_sha, arp_cache_entry->mac, sizeof(unsigned char) * ETHER_ADDR_LEN);
-      new_packet_arp_headers->ar_sip = arp_cache_entry->ip;
+      new_packet_arp_headers->ar_sip = arp_header->ar_tip;
       memcpy(new_packet_arp_headers->ar_tha, arp_header->ar_sha, sizeof(unsigned char) * ETHER_ADDR_LEN);
       new_packet_arp_headers->ar_tip = arp_header->ar_sip;
 
