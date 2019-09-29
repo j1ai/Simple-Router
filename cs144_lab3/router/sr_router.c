@@ -51,16 +51,26 @@ void sr_init(struct sr_instance *sr)
 
 } /* -- sr_init -- */
 
-/**
- * Handles incoming ARP packets
- * It will do the following:
- * 1. If it is an ARP request packet, then it will:
- *     a) If it is for the router, then it will return the router's MAC address
- *     b) If it is not for the router, then it will drop the packet
- * 
- * 2. If it is an ARP reply packet, then it will:
+/*---------------------------------------------------------------------
+ * Method: sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
  *
- */
+ * This method is called when the router receives an ARP packet.
+ * It will do the following things:
+ * 1) If it is a ARP request packet:
+ *    a) If it is for the router, then it will return an ARP reply with the router's MAC address
+ *    b) If it is not for the router, then ...
+ * 
+ * 2) If it is an ARP reply packet:
+ *    a)
+ *    b)
+ *
+ * Note: Both the packet buffer and the character's memory are handled
+ * by sr_vns_comm.c that means do NOT delete either.  Make a copy of the
+ * packet instead if you intend to keep it around beyond the scope of
+ * the method call.
+ *
+ *---------------------------------------------------------------------*/
 void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface) 
 {
   /* Note that the ARP header is in the data section of the Ethernet packet */
@@ -125,6 +135,44 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
   }
 }
 
+void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+  printf("Received ICMP IP Packet!\n");
+
+  /* Check to see if it is a valid ICMP packet */
+  if (len < sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t)) {
+    fprintf(stderr, "Failed to print ICMP header, insufficient length\n");
+    return;
+  }
+
+  sr_icmp_hdr_t *icmp_hdr = (sr_icmp_hdr_t *)(packet);
+  fprintf(stderr, "ICMP header:\n");
+  fprintf(stderr, "\ttype: %d\n", icmp_hdr->icmp_type);
+  fprintf(stderr, "\tcode: %d\n", icmp_hdr->icmp_code);
+  
+  /* Keep checksum in NBO */
+  fprintf(stderr, "\tchecksum: %d\n", icmp_hdr->icmp_sum);
+}
+
+/*---------------------------------------------------------------------
+ * Method: sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called to handle when an IP packet is received.
+ *
+ *---------------------------------------------------------------------*/
+void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+  uint8_t ip_proto = ip_protocol(packet + sizeof(sr_ethernet_hdr_t));
+
+  if (ip_proto == ip_protocol_icmp) {
+    sr_handle_icmp_ip_packet(sr, packet, len, interface);
+
+  } else {
+    /* Do something if it is not an ICMP IP Packet */
+  }
+}
+
 /*---------------------------------------------------------------------
  * Method: sr_handlepacket(uint8_t* p,char* interface)
  * Scope:  Global
@@ -166,6 +214,7 @@ void sr_handlepacket(struct sr_instance *sr,
   /* Checks if it is an IP packet */
   if (ethernet_type == ethertype_ip) {
     printf("Found IP packet!\n");
+    sr_handle_ip_packet(sr, packet, len, interface);
   }
 
   /* Checks if it is an ARP packet */
