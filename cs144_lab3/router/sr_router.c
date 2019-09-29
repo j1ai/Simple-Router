@@ -113,6 +113,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       memcpy(new_packet_arp_headers->ar_tha, arp_header->ar_sha, sizeof(unsigned char) * ETHER_ADDR_LEN);
       new_packet_arp_headers->ar_tip = arp_header->ar_sip;
 
+      printf("Built new ARP reply packet:\n");
       print_hdrs(new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
 
       /* Return a ARP reply */
@@ -161,6 +162,7 @@ void sr_handlepacket(struct sr_instance *sr,
   printf("*** -> Received packet of length %d \n",len);
 
   /* fill in code here */
+  print_hdrs(packet, len);
 
   /*
     So the specifications of an ARP packet is at: http://www.networksorcery.com/enp/protocol/arp.htm
@@ -168,8 +170,6 @@ void sr_handlepacket(struct sr_instance *sr,
    */
   struct sr_ethernet_hdr_t *ethernet_header = (struct sr_ethernet_hdr_t *) packet;
   uint16_t ethernet_type = ethertype((uint8_t *)ethernet_header);
-
-  print_hdrs(packet, len);
 
   /* Checks if it is an ARP packet */
   if (ethernet_type == ethertype_arp) {
