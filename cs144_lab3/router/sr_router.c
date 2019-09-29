@@ -170,43 +170,42 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
   if (icmp_header->icmp_type == 0x8) {
     printf("Received ICMP IP Echo Request Packet!\n");
 
-    /* Create a new ethernet packet */
-    int new_packet_length = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t);
-    uint8_t *new_packet = malloc(new_packet_length);
+    /** 
+     * According to http://www.networksorcery.com/enp/protocol/icmp/msg0.htm#targetText=All%20ICMP%20Echo%20Reply%20messages,in%20the%20resulting%20Echo%20Reply,
+     * we need to make an exact copy of the packet, and only change a few things
+    */
+    print_hdrs(packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t));
 
-    /* Set up the ethernet packet */
-    sr_ethernet_hdr_t *new_packet_eth_headers = (sr_ethernet_hdr_t *) new_packet;
-    memcpy(new_packet_eth_headers->ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-    memcpy(new_packet_eth_headers->ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-    new_packet_eth_headers->ether_type = htons(ethertype_ip);
+    /* Swap the source and destination MAC addresses */
+    uint8_t new_ether_dhost[6];
+    uint8_t new_ether_shost[6];
+    memcyp(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t)*ETHER_ADDR_LEN);
+    memcyp(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t)*ETHER_ADDR_LEN);
+    memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t)*ETHER_ADDR_LEN);
+    memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t)*ETHER_ADDR_LEN);
 
-    /* Set up the IP header */
-    sr_ip_hdr_t *new_packet_ip_headers = (sr_ip_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
-    new_packet_ip_headers->ip_v = ip_header->ip_v;
-    new_packet_ip_headers->ip_hl = ip_header->ip_hl;
-    new_packet_ip_headers->ip_tos = ip_header->ip_tos;  /* ?? */
-    new_packet_ip_headers->ip_len = ip_header->ip_len;  /* ?? */
-    new_packet_ip_headers->ip_id = ip_header->ip_id;   /* ?? */
-    new_packet_ip_headers->ip_off = ip_header->ip_off;  /* ?? */
-    new_packet_ip_headers->ip_ttl = ip_header->ip_ttl - 1;  /* ?? */
-    new_packet_ip_headers->ip_p = ip_protocol_icmp;    /* ?? */
-    new_packet_ip_headers->ip_sum = ip_header->ip_sum;  /* ?? */
-    new_packet_ip_headers->ip_src = ip_header->ip_dst;
-    new_packet_ip_headers->ip_dst = ip_header->ip_src;
+    /* Swap the source and destination IP addresses */
+    uint32_t new_ip_src = ip_header->ip_dst;
+    uint32_t new_ip_dst = ip_header->ip_src;
+    ip_header->ip_src = new_ip_src;
+    ip_header->ip_dst = new_ip_dst;
 
-    /* Set up the ICMP header */
-    sr_icmp_hdr_t *new_packet_icmp_headers = (sr_icmp_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_icmp_hdr_t));
-    new_packet_icmp_headers->icmp_type = 0;
-    new_packet_icmp_headers->icmp_code = 0;
-    new_packet_icmp_headers->icmp_sum = 0; /* ?? */
+    /* Change the ICMP type and code */
+    icmp_header->icmp_code = 0;
+    icmp_header->icmp_type = 0;
 
-    print_hdrs(packet, new_packet_length);
-    print_hdrs(new_packet, new_packet_length);
+    /* Recompute the checksum in the IP header */
+    ip_header->ip_sum = 0;
+    ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
+
+    /* Recompute the checksum in the ICMP header */
+    icmp_header->icmp_sum = 0;
+    icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+
+    print_hdrs(packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t));
 
     /* Send the packet */
-    sr_send_packet(sr, new_packet, new_packet_length, interface);
-
-    free(new_packet);
+    sr_send_packet(sr, packet, len, interface);
   }
 }
 
