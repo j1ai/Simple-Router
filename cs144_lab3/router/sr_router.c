@@ -99,8 +99,8 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       sr_arp_hdr_t *new_packet_arp_headers = (sr_arp_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
       new_packet_arp_headers->ar_pro = arp_header->ar_pro;
       new_packet_arp_headers->ar_hln = arp_header->ar_hln;
-      /* new_packet_arp_headers->ar_pln = arp_header->ar_pln; */
-      new_packet_arp_headers->ar_op = arp_op_reply;
+      new_packet_arp_headers->ar_pln = arp_header->ar_pln;
+      new_packet_arp_headers->ar_op = htons(arp_op_reply);
       memcpy(new_packet_arp_headers->ar_sha, router_ether_add, sizeof(unsigned char) * ETHER_ADDR_LEN);
       new_packet_arp_headers->ar_sip = arp_header->ar_tip;
       memcpy(new_packet_arp_headers->ar_tha, arp_header->ar_sha, sizeof(unsigned char) * ETHER_ADDR_LEN);
