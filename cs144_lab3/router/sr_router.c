@@ -72,6 +72,8 @@ void sr_handle_arp_packet(struct sr_instance* sr, uint8_t *packet, unsigned int 
   /* Note that the ARP header is in the data section of the Ethernet packet */
   sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
 
+  printf("ARP packet request type: %u\n", (unsigned int) arp_header->ar_op);
+
   if (arp_header->ar_op == arp_op_request) {
     printf("Received ARP request packet!\n");
   }
