@@ -62,7 +62,7 @@ void sr_init(struct sr_instance *sr)
  * 2. If it is an ARP reply packet, then it will:
  *        
  */
-void sr_handle_arp_packet(struct sr_instance* sr, uint8_t *packet, unsigned int len, char *interface) 
+void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface) 
 {
   /**
    * Get what type of ARP packet it is.
@@ -75,9 +75,15 @@ void sr_handle_arp_packet(struct sr_instance* sr, uint8_t *packet, unsigned int 
   printf("ARP packet request type: %u\n", (unsigned int) arp_header->ar_op);
 
   /* Note that the number in arp_header->ar_op is in network format; we need it in the host's short format (little endian format)*/
+
+  /* Checks if it is an ARP request */
   if (ntohs(arp_header->ar_op) == arp_op_request) {
     printf("Received ARP request packet!\n");
+    print_addr_eth(arp_header->ar_sip);
+    print_addr_eth(arp_header->ar_tip);
   }
+
+  /* Checks if it is an ARP reply */
   else if (arp_header->ar_op == arp_op_reply) {
     printf("Received ARP reply packet!\n");
   }
