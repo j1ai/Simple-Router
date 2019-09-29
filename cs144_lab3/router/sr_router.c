@@ -100,7 +100,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       sr_ethernet_hdr_t *new_packet_eth_headers = (sr_ethernet_hdr_t *) new_packet;
       memcpy(new_packet_eth_headers->ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
       memcpy(new_packet_eth_headers->ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-      new_packet_eth_headers->ether_type = ethertype_arp;
+      new_packet_eth_headers->ether_type = htons(ethertype_arp);
 
       /* Set the ARP header */
       sr_arp_hdr_t *new_packet_arp_headers = (sr_arp_hdr_t *) (new_packet + sizeof(sr_arp_hdr_t));
