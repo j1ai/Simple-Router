@@ -179,10 +179,10 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     /* Swap the source and destination MAC addresses */
     uint8_t new_ether_dhost[6];
     uint8_t new_ether_shost[6];
-    memcyp(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t)*ETHER_ADDR_LEN);
-    memcyp(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t)*ETHER_ADDR_LEN);
-    memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t)*ETHER_ADDR_LEN);
-    memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t)*ETHER_ADDR_LEN);
+    memcpy(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
 
     /* Swap the source and destination IP addresses */
     uint32_t new_ip_src = ip_header->ip_dst;
