@@ -82,6 +82,9 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
     printf("Received ARP request packet!\n");
     print_addr_ip_int(ntohl(arp_header->ar_sip));
     print_addr_ip_int(ntohl(arp_header->ar_tip));
+
+    /* Map the source's ip address and the source's MAC address to the ARP table */
+    sr_arpcache_insert(&(sr->cache), (unsigned char *) arp_header->ar_sha, (uint32_t) arp_header->ar_sip);
   }
 
   /* Checks if it is an ARP reply */
