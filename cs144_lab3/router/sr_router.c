@@ -138,25 +138,22 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
   printf("Received ICMP IP Packet!\n");
+  print_hdr_icmp(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
   /* Check to see if it is a valid ICMP packet */
   if (len < sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t)) {
     fprintf(stderr, "Failed to print ICMP header, insufficient length\n");
     return;
   }
+  return;
 
-  sr_icmp_hdr_t *icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
-
-  /* Check if it is an echo request; if so, then send an echo reply */
-  if (icmp_hdr->icmp_type == 0x8) {
-    printf("Received ICMP IP Echo Request Packet!\n");
-  }
+  sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+  sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) ethernet_header;
+  sr_icmp_hdr_t *icmp_hdr = (sr_icmp_hdr_t *)(ip_header + sizeof(sr_ip_hdr_t));
 
   fprintf(stderr, "ICMP header:\n");
   fprintf(stderr, "\ttype: %d\n", icmp_hdr->icmp_type);
   fprintf(stderr, "\tcode: %d\n", icmp_hdr->icmp_code);
-
-  /* Keep checksum in NBO */
   fprintf(stderr, "\tchecksum: %d\n", icmp_hdr->icmp_sum);
 }
 
