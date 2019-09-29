@@ -80,7 +80,6 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
   if (ntohs(arp_header->ar_op) == arp_op_request) {
     printf("Received ARP request packet!\n");
 
-    /* Map the source's ip address and the source's MAC address to the ARP table */
     /* struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), (uint32_t) arp_header->ar_tip); */
     struct sr_arpentry *arp_cache_entry = malloc(sizeof(struct sr_arpentry));
     arp_cache_entry->ip = 100;
@@ -113,6 +112,8 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       new_packet_arp_headers->ar_sip = arp_cache_entry->ip;
       memcpy(new_packet_arp_headers->ar_tha, arp_header->ar_sha, sizeof(unsigned char) * ETHER_ADDR_LEN);
       new_packet_arp_headers->ar_tip = arp_header->ar_sip;
+
+      print_hdrs(new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
 
       /* Return a ARP reply */
       sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface);
