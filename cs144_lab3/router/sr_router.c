@@ -77,14 +77,18 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
   if (ntohs(arp_header->ar_op) == arp_op_request) {
     printf("Received ARP request packet!\n");
 
-    /* struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), (uint32_t) arp_header->ar_tip); */
+    /* Check if it is targetted to the router */
+    unsigned char *router_ether_add = sr_get_ether_addr(sr, arp_header->ar_tip);
+
+    /* struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), (uint32_t) arp_header->ar_tip);
     struct sr_arpentry *arp_cache_entry = malloc(sizeof(struct sr_arpentry));
     arp_cache_entry->ip = 100;
     unsigned char *mac = "pppppp";
     memcpy(arp_cache_entry->mac, mac, 6);
+    */
 
     /* If the entry is not there */
-    if (arp_cache_entry == NULL) {
+    if (router_ether_add == NULL) {
       /* do something */
     }
 
@@ -96,7 +100,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       /* Add fields to the ethernet packet */
       sr_ethernet_hdr_t *new_packet_eth_headers = (sr_ethernet_hdr_t *) new_packet;
       memcpy(new_packet_eth_headers->ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-      memcpy(new_packet_eth_headers->ether_shost, arp_cache_entry->mac, sizeof(uint8_t) * ETHER_ADDR_LEN);
+      memcpy(new_packet_eth_headers->ether_shost, router_ether_add, sizeof(uint8_t) * ETHER_ADDR_LEN);
       new_packet_eth_headers->ether_type = htons(ethertype_arp);
 
       /* Set the ARP header */
@@ -105,7 +109,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       new_packet_arp_headers->ar_hln = arp_header->ar_hln;
       new_packet_arp_headers->ar_pln = arp_header->ar_pln;
       new_packet_arp_headers->ar_op = arp_op_reply;
-      memcpy(new_packet_arp_headers->ar_sha, arp_cache_entry->mac, sizeof(unsigned char) * ETHER_ADDR_LEN);
+      memcpy(new_packet_arp_headers->ar_sha, router_ether_add, sizeof(unsigned char) * ETHER_ADDR_LEN);
       new_packet_arp_headers->ar_sip = arp_header->ar_tip;
       memcpy(new_packet_arp_headers->ar_tha, arp_header->ar_sha, sizeof(unsigned char) * ETHER_ADDR_LEN);
       new_packet_arp_headers->ar_tip = arp_header->ar_sip;
@@ -116,7 +120,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       /* Return a ARP reply */
       sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface);
 
-      free(arp_cache_entry);
+      free(router_ether_add);
       free(new_packet);
     }
   }
@@ -166,7 +170,7 @@ void sr_handlepacket(struct sr_instance *sr,
     Note that an ARP packet is wrapped around the packet
    */
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
-  uint16_t ethernet_type = ethertype((uint8_t *)ethernet_header);
+  uint16_t ethernet_type = ethertype((uint8_t *) ethernet_header);
 
   /* Checks if it is an ARP packet */
   if (ethernet_type == ethertype_arp) {
