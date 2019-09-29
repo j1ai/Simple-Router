@@ -198,8 +198,8 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
 
     /* Recompute the checksum in the ICMP header */
-    icmp_header->icmp_sum = 1;
     icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+    icmp_header->icmp_sum = 0;
 
     print_hdrs(packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t));
 
