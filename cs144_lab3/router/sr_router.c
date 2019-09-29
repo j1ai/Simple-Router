@@ -81,7 +81,6 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
     printf("Received ARP request packet!\n");
 
     /* Map the source's ip address and the source's MAC address to the ARP table */
-    sr_arpcache_dump(&(sr->cache));
     struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), (uint32_t) arp_header->ar_tip);
 
     /* If the entry is not there */
@@ -96,13 +95,24 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 
       /* Add fields to the ethernet packet */
       sr_ethernet_hdr_t *new_packet_eth_headers = (sr_ethernet_hdr_t *) new_packet;
+      memcpy(new_packet_eth_headers->ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+      memcpy(new_packet_eth_headers->ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
       new_packet_eth_headers->ether_type = ethertype_arp;
-      new_packet_eth_headers->ether_dhost = ethernet_header->ether_shost;
-      
 
+      /* Set the ARP header */
+      sr_arp_hdr_t *new_packet_arp_headers = (sr_arp_hdr_t *) (new_packet + sizeof(sr_arp_hdr_t));
+      new_packet_arp_headers->ar_pro = arp_header->ar_pro;
+      new_packet_arp_headers->ar_hln = arp_header->ar_hln;
+      new_packet_arp_headers->ar_pln = arp_header->ar_pln;
+      new_packet_arp_headers->ar_op = arp_op_reply;
+      memcpy(new_packet_arp_headers->ar_sha, arp_cache_entry->mac, sizeof(unsigned char) * ETHER_ADDR_LEN);
+      new_packet_arp_headers->ar_sip = arp_cache_entry->ip;
+      memcpy(new_packet_arp_headers->ar_tha, arp_header->ar_sha, sizeof(unsigned char) * ETHER_ADDR_LEN);
+      new_packet_arp_headers->ar_tip = arp_header->ar_sip;
 
       /* Return a ARP reply */
-
+      sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface);
+      
       free(arp_cache_entry);
     }
   }
