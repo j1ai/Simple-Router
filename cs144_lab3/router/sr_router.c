@@ -79,8 +79,8 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
   /* Checks if it is an ARP request */
   if (ntohs(arp_header->ar_op) == arp_op_request) {
     printf("Received ARP request packet!\n");
-    print_addr_ip_int(arp_header->ar_sip);
-    print_addr_ip_int(arp_header->ar_tip);
+    print_addr_ip_int(ntohl(arp_header->ar_sip));
+    print_addr_ip_int(ntohl(arp_header->ar_tip));
   }
 
   /* Checks if it is an ARP reply */
