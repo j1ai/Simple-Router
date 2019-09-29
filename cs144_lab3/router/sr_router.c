@@ -89,17 +89,17 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 
     /* If the entry is there */
     else {
-      /* Create a new ethernet packet */
-      uint8_t *new_packet = malloc(sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
+      // /* Create a new ethernet packet */
+      // uint8_t *new_packet = malloc(sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
 
-      /* Add fields to the ethernet packet */
-      sr_ethernet_hdr_t *new_packet_headers = (sr_ethernet_hdr_t *) new_packet;
-      new_packet_headers->ether_type = ethertype_arp;
+      // /* Add fields to the ethernet packet */
+      // sr_ethernet_hdr_t *new_packet_headers = (sr_ethernet_hdr_t *) new_packet;
+      // new_packet_headers->ether_type = ethertype_arp;
 
 
-      /* Return a ARP reply */
+      // /* Return a ARP reply */
 
-      free(arp_cache_entry);
+      // free(arp_cache_entry);
     }
   }
 
