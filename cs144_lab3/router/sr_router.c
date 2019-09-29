@@ -55,9 +55,8 @@ void sr_init(struct sr_instance *sr)
  * Handles incoming ARP packets
  * It will do the following:
  * 1. If it is an ARP request packet, then it will:
- *     - Look up the MAC address for the destination IP address and return a reply. But 
- *       if the destination IP address is not in the ARP cache, then we broadcast an ARP request
- *       in the other ports
+ *     a) If it is for the router, then it will return the router's MAC address
+ *     b) If it is not for the router, then it will drop the packet
  * 
  * 2. If it is an ARP reply packet, then it will:
  *        
@@ -79,13 +78,6 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 
     /* Check if it is targetted to the router */
     unsigned char *router_ether_add = sr_get_ether_addr(sr, arp_header->ar_tip);
-
-    /* struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), (uint32_t) arp_header->ar_tip);
-    struct sr_arpentry *arp_cache_entry = malloc(sizeof(struct sr_arpentry));
-    arp_cache_entry->ip = 100;
-    unsigned char *mac = "pppppp";
-    memcpy(arp_cache_entry->mac, mac, 6);
-    */
 
     /* If the entry is not there */
     if (router_ether_add == NULL) {
@@ -118,7 +110,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       print_hdrs(new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
 
       /* Return a ARP reply */
-      sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface);
+      /* sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface); */
 
       free(router_ether_add);
       free(new_packet);
