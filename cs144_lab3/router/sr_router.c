@@ -88,11 +88,9 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 
     /* If the entry is not there */
     if (router_ether_add == NULL) {
-      /* do something */
-    }
+      /* TODO: Do something if the entry is not there */
 
-    /* If the entry is there */
-    else {
+    } else {
       /* Create a new ethernet packet */
       uint8_t *new_packet = malloc(sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
 
@@ -126,14 +124,14 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       free(router_ether_add);
       free(new_packet);
     }
-  }
 
-  /* Checks if it is an ARP reply */
-  else if (arp_header->ar_op == arp_op_reply) {
+  } else if (arp_header->ar_op == arp_op_reply) {
     printf("Received ARP reply packet!\n");
-  }
-  else {
+    /* TODO: Do something if it is an ARP reply packet!*/
+
+  } else {
     printf("ERROR! Unknown ARP packet!\n");
+    /* TODO: Do something if it is an unknown ARP packet*/
   }
 }
 
@@ -208,6 +206,9 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
 
     /* Send the packet */
     sr_send_packet(sr, packet, len, interface);
+
+  } else {
+    /* TODO: Do something if it is not a ECHO request*/
   }
 }
 
@@ -331,6 +332,7 @@ void sr_handlepacket(struct sr_instance *sr,
 
   else {
     printf("ERROR! Cannot determine what ethernet type this is! Received ethernet type: %u\n", (unsigned int) ethernet_type);
+    /* TODO: Do something for unknown packet type */
   }
 }/* end sr_ForwardPacket */
 
