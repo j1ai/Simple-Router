@@ -73,6 +73,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
   sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
 
   printf("ARP packet request type: %u\n", (unsigned int) arp_header->ar_op);
+  print_hdr_arp((uint8_t) arp_header);
 
   /* Note that the number in arp_header->ar_op is in network format; we need it in the host's short format (little endian format)*/
 
