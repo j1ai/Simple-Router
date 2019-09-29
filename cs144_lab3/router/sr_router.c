@@ -111,16 +111,12 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       print_hdrs(new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
 
       /* Return a ARP reply */
-      if (sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface) == 0) 
+      if (sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface) != 0) 
       {
         printf("ERROR: Packet sent unsuccessfully\n");
       }
-      else 
-      {
-        printf("SENT PACKET\n");
-      }
 
-      /* free(router_ether_add); */
+      free(router_ether_add);
       free(new_packet);
     }
   }

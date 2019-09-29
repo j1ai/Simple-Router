@@ -602,11 +602,8 @@ int sr_send_packet(struct sr_instance* sr /* borrowed */,
         free(sr_pkt);
         return -1;
     }
-    
+
     free(sr_pkt);
-
-    fprintf(stderr, "hehehehe\n");
-
     return 0;
 } /* -- sr_send_packet -- */
 
