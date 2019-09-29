@@ -118,7 +118,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 
       /* Return a ARP reply */
       if (sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface) != 0) {
-        printf("ERROR: Packet sent unsuccessfully\n");
+        fprintf(stderr, "ERROR: Packet sent unsuccessfully\n");
       }
 
       free(router_ether_add);
@@ -126,11 +126,11 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
     }
 
   } else if (arp_header->ar_op == arp_op_reply) {
-    printf("Received ARP reply packet!\n");
+    fprintf(stderr, "TODO: Cannot handle ARP reply packet!\n");
     /* TODO: Do something if it is an ARP reply packet!*/
 
   } else {
-    printf("ERROR! Unknown ARP packet!\n");
+    fprintf(stderr, "ERROR! Unknown ARP packet!\n");
     /* TODO: Do something if it is an unknown ARP packet*/
   }
 }
@@ -209,6 +209,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
 
   } else {
     /* TODO: Do something if it is not a ECHO request*/
+    fprintf(stderr, "TODO: Cannot handle non-ECHO request packets!\n");
   }
 }
 
@@ -221,6 +222,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
  *---------------------------------------------------------------------*/
 void sr_handle_tcp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
+  fprintf(stderr, "TODO: Cannot handle TCP IP Packet\n");
   /* TODO: Do something if it is a TCP IP Packet */
 }
 
@@ -233,6 +235,7 @@ void sr_handle_tcp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned i
  *---------------------------------------------------------------------*/
 void sr_handle_udp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
+  fprintf(stderr, "TODO: Cannot handle UDP IP Packet\n");
   /* TODO: Do something if it is a UDP IP Packet */
 }
 
@@ -245,6 +248,7 @@ void sr_handle_udp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned i
  *---------------------------------------------------------------------*/
 void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
+  fprintf(stderr, "TODO: Cannot handle Foreign IP Packet\n");
   /* TODO: Do something if the IP packet is not for this router */
 }
 
@@ -331,7 +335,7 @@ void sr_handlepacket(struct sr_instance *sr,
   }
 
   else {
-    printf("ERROR! Cannot determine what ethernet type this is! Received ethernet type: %u\n", (unsigned int) ethernet_type);
+    fprintf(stderr, "TODO: Cannot determine what ethernet type this is! Received ethernet type: %u\n", (unsigned int) ethernet_type);
     /* TODO: Do something for unknown packet type */
   }
 }/* end sr_ForwardPacket */
