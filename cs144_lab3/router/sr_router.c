@@ -69,7 +69,9 @@ void sr_init(struct sr_instance *sr)
  * by sr_vns_comm.c that means do NOT delete either.  Make a copy of the
  * packet instead if you intend to keep it around beyond the scope of
  * the method call.
- *
+ * 
+ * TODO: This function needs some testing
+ * 
  *---------------------------------------------------------------------*/
 void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface) 
 {
@@ -145,6 +147,8 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
  *    Then it will send out an ICMP Echo response
  * 
  * 2) 
+ * 
+ * TODO: This function needs some testing
  *
  *---------------------------------------------------------------------*/
 void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
@@ -172,7 +176,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
 
     /** 
      * According to http://www.networksorcery.com/enp/protocol/icmp/msg0.htm#targetText=All%20ICMP%20Echo%20Reply%20messages,in%20the%20resulting%20Echo%20Reply,
-     * we need to make an exact copy of the packet, and only change a few things
+     * we need to send an exact copy of the packet, and only change a few things
     */
 
     /* Swap the source and destination MAC addresses */
@@ -286,6 +290,8 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
  * by sr_vns_comm.c that means do NOT delete either.  Make a copy of the
  * packet instead if you intend to keep it around beyond the scope of
  * the method call.
+ * 
+ * TODO: This function needs some testing
  *
  *---------------------------------------------------------------------*/
 
