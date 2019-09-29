@@ -200,6 +200,8 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     new_packet_icmp_headers->icmp_code = 0;
     new_packet_icmp_headers->icmp_sum = 0; /* ?? */
 
+    print_hdrs(new_packet, new_packet_length);
+
     /* Send the packet */
     sr_send_packet(sr, new_packet, new_packet_length, interface);
 
