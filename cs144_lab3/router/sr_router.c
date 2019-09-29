@@ -156,9 +156,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     fprintf(stderr, "Failed to print ICMP header, insufficient length\n");
     return;
   }
-
-  print_hdr_icmp(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
-
+  
   /* Get the ethernet header */
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
 
