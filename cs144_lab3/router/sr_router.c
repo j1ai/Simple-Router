@@ -110,7 +110,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       print_hdrs(new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
 
       /* Return a ARP reply */
-      /* sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface); */
+      sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface);
 
       free(router_ether_add);
       free(new_packet);
@@ -152,6 +152,8 @@ void sr_handlepacket(struct sr_instance *sr,
   assert(sr);
   assert(packet);
   assert(interface);
+
+  printf("Interface %s\n", interface);
 
   printf("*** -> Received packet of length %d \n",len);
 
