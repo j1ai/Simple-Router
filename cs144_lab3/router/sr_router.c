@@ -90,7 +90,7 @@ void sr_handlepacket(struct sr_instance* sr,
    
    // Checks if it isn ARP packet
    if (ethernet_type == ethertype_arp) {
-     printf('Found ARP Packet!');
+     printf("Found ARP Packet!");
    }
 
 }/* end sr_ForwardPacket */
