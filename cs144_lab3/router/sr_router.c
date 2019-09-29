@@ -165,7 +165,7 @@ void sr_handlepacket(struct sr_instance *sr,
     So the specifications of an ARP packet is at: http://www.networksorcery.com/enp/protocol/arp.htm
     Note that an ARP packet is wrapped around the packet
    */
-  struct sr_ethernet_hdr_t *ethernet_header = (struct sr_ethernet_hdr_t *) packet;
+  sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
   uint16_t ethernet_type = ethertype((uint8_t *)ethernet_header);
 
   /* Checks if it is an ARP packet */
