@@ -92,6 +92,7 @@ void sr_handlepacket(struct sr_instance *sr,
   /* Checks if it is an ARP packet */
   if (ethernet_type == ethertype_arp) {
     printf("Found ARP Packet!\n");
+    sr_handle_arp_packet(sr, packet, len, interface);
   }
   
   /* Checks if it is an IP packet */
@@ -125,7 +126,7 @@ void sr_handle_arp_packet(struct sr_instance* sr, uint8_t *packet, unsigned int 
 
   /* Note that the ARP header is in the data section of the Ethernet packet */
   sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
-  
+
   if (arp_header->ar_op == arp_op_request) {
     printf("Received ARP request packet!\n");
   }
