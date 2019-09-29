@@ -50,6 +50,39 @@ void sr_init(struct sr_instance *sr)
 
 } /* -- sr_init -- */
 
+/**
+ * Handles incoming ARP packets
+ * It will do the following:
+ * 1. If it is an ARP request packet, then it will:
+ *    a) Add the source IP address and the source MAC address to the ARP cache
+ *    b) Look up the MAC address for the destination IP address and return a reply. But 
+ *       if the destination IP address is not in the ARP cache, then we broadcast an ARP request
+ *       in the other ports
+ * 
+ * 2. If it is an ARP reply packet, then it will:
+ *        
+ */
+void sr_handle_arp_packet(struct sr_instance* sr, uint8_t *packet, unsigned int len, char *interface) 
+{
+  /**
+   * Get what type of ARP packet it is.
+   * The ARP packet type is stored in the opcode as defined in http://www.networksorcery.com/enp/protocol/arp.html
+   */
+
+  /* Note that the ARP header is in the data section of the Ethernet packet */
+  sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
+
+  if (arp_header->ar_op == arp_op_request) {
+    printf("Received ARP request packet!\n");
+  }
+  else if (arp_header->ar_op == arp_op_reply) {
+    printf("Received ARP reply packet!\n");
+  }
+  else {
+    printf("ERROR! Unknown ARP packet!\n");
+  }
+}
+
 /*---------------------------------------------------------------------
  * Method: sr_handlepacket(uint8_t* p,char* interface)
  * Scope:  Global
@@ -105,36 +138,4 @@ void sr_handlepacket(struct sr_instance *sr,
   }
 }/* end sr_ForwardPacket */
 
-/**
- * Handles incoming ARP packets
- * It will do the following:
- * 1. If it is an ARP request packet, then it will:
- *    a) Add the source IP address and the source MAC address to the ARP cache
- *    b) Look up the MAC address for the destination IP address and return a reply. But 
- *       if the destination IP address is not in the ARP cache, then we broadcast an ARP request
- *       in the other ports
- * 
- * 2. If it is an ARP reply packet, then it will:
- *        
- */
-void sr_handle_arp_packet(struct sr_instance* sr, uint8_t *packet, unsigned int len, char *interface) 
-{
-  /**
-   * Get what type of ARP packet it is.
-   * The ARP packet type is stored in the opcode as defined in http://www.networksorcery.com/enp/protocol/arp.html
-   */
-
-  /* Note that the ARP header is in the data section of the Ethernet packet */
-  sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
-
-  if (arp_header->ar_op == arp_op_request) {
-    printf("Received ARP request packet!\n");
-  }
-  else if (arp_header->ar_op == arp_op_reply) {
-    printf("Received ARP reply packet!\n");
-  }
-  else {
-    printf("ERROR! Unknown ARP packet!\n");
-  }
-}
 
