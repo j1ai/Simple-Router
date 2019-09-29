@@ -59,15 +59,10 @@ void sr_init(struct sr_instance *sr)
  *     b) If it is not for the router, then it will drop the packet
  * 
  * 2. If it is an ARP reply packet, then it will:
- *        
+ *
  */
 void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface) 
 {
-  /**
-   * Get what type of ARP packet it is.
-   * The ARP packet type is stored in the opcode as defined in http://www.networksorcery.com/enp/protocol/arp.html
-   */
-
   /* Note that the ARP header is in the data section of the Ethernet packet */
   sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
@@ -112,8 +107,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       print_hdrs(new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
 
       /* Return a ARP reply */
-      if (sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface) != 0) 
-      {
+      if (sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface) != 0) {
         printf("ERROR: Packet sent unsuccessfully\n");
       }
 
