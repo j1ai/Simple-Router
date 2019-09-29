@@ -174,7 +174,6 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
      * According to http://www.networksorcery.com/enp/protocol/icmp/msg0.htm#targetText=All%20ICMP%20Echo%20Reply%20messages,in%20the%20resulting%20Echo%20Reply,
      * we need to make an exact copy of the packet, and only change a few things
     */
-    print_hdrs(packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t));
 
     /* Swap the source and destination MAC addresses */
     uint8_t new_ether_dhost[6];
@@ -199,7 +198,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
 
     /* Recompute the checksum in the ICMP header */
-    icmp_header->icmp_sum = 0;
+    icmp_header->icmp_sum = 1;
     icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
     print_hdrs(packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t));
