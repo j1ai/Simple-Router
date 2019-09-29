@@ -85,7 +85,7 @@ void sr_handlepacket(struct sr_instance* sr,
     Note that an ARP packet is wrapped around the packet
    */
    struct sr_ethernet_hdr_t *ethernet_header = (struct sr_ethernet_hdr_t *) packet;
-   uint16_t ethernet_type = ethernet_header->ether_type;
+   uint16_t ethernet_type = ntohs(ethernet_header->ether_type);
    printf("%u\n", (unsigned int) ethernet_type);
 
 }/* end sr_ForwardPacket */
