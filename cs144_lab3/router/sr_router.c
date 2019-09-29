@@ -189,7 +189,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     new_packet_ip_headers->ip_id = 0;   /* ?? */
     new_packet_ip_headers->ip_off = 0;  /* ?? */
     new_packet_ip_headers->ip_ttl = 0;  /* ?? */
-    new_packet_ip_headers->ip_p = 0;    /* ?? */
+    new_packet_ip_headers->ip_p = ip_protocol_icmp;    /* ?? */
     new_packet_ip_headers->ip_sum = 0;  /* ?? */
     new_packet_ip_headers->ip_src = ip_header->ip_dst;
     new_packet_ip_headers->ip_dst = ip_header->ip_src;
