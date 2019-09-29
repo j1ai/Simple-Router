@@ -122,6 +122,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 
       free(router_ether_add);
       free(new_packet);
+      printf("SENT PACKET\n");
     }
   }
 
