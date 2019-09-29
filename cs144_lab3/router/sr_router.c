@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-
+#include <string.h>
 
 #include "sr_if.h"
 #include "sr_rt.h"
@@ -112,7 +112,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 
       /* Return a ARP reply */
       sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface);
-      
+
       free(arp_cache_entry);
     }
   }
