@@ -74,7 +74,8 @@ void sr_handle_arp_packet(struct sr_instance* sr, uint8_t *packet, unsigned int 
 
   printf("ARP packet request type: %u\n", (unsigned int) arp_header->ar_op);
 
-  if (arp_header->ar_op == arp_op_request) {
+  /* Note that the number in arp_header->ar_op is in network format; we need it in the host's short format (little endian format)*/
+  if (ntohs(arp_header->ar_op) == arp_op_request) {
     printf("Received ARP request packet!\n");
   }
   else if (arp_header->ar_op == arp_op_reply) {
