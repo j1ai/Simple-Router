@@ -54,8 +54,7 @@ void sr_init(struct sr_instance *sr)
  * Handles incoming ARP packets
  * It will do the following:
  * 1. If it is an ARP request packet, then it will:
- *    a) Add the source IP address and the source MAC address to the ARP cache
- *    b) Look up the MAC address for the destination IP address and return a reply. But 
+ *     - Look up the MAC address for the destination IP address and return a reply. But 
  *       if the destination IP address is not in the ARP cache, then we broadcast an ARP request
  *       in the other ports
  * 
@@ -75,18 +74,33 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
   printf("ARP packet request type: %u\n", (unsigned int) arp_header->ar_op);
   print_hdr_arp((uint8_t *) arp_header);
 
-  /* Note that the number in arp_header->ar_op is in network format; we need it in the host's short format (little endian format)*/
-
   /* Checks if it is an ARP request */
   if (ntohs(arp_header->ar_op) == arp_op_request) {
     printf("Received ARP request packet!\n");
-    print_addr_ip_int(ntohl(arp_header->ar_sip));
-    print_addr_ip_int(ntohl(arp_header->ar_tip));
 
     /* Map the source's ip address and the source's MAC address to the ARP table */
     sr_arpcache_dump(&(sr->cache));
-    struct sr_arpreq *arp_req = sr_arpcache_insert(&(sr->cache), (unsigned char *) arp_header->ar_sha, (uint32_t) arp_header->ar_sip);
-    sr_arpcache_dump(&(sr->cache));
+    struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), (uint32_t) arp_header->ar_tip);
+
+    /* If the entry is not there */
+    if (arp_cache_entry == NULL) {
+      /* do something */
+    }
+
+    /* If the entry is there */
+    else {
+      /* Create a new ethernet packet */
+      uint8_t *new_packet = malloc(sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
+
+      /* Add fields to the ethernet packet */
+      sr_ethernet_hdr_t *new_packet_headers = (sr_ethernet_hdr_t *) new_packet;
+      new_packet_headers->ether_type = ethertype_arp;
+
+
+      /* Return a ARP reply */
+
+      free(arp_cache_entry);
+    }
   }
 
   /* Checks if it is an ARP reply */
@@ -135,7 +149,7 @@ void sr_handlepacket(struct sr_instance *sr,
   struct sr_ethernet_hdr_t *ethernet_header = (struct sr_ethernet_hdr_t *) packet;
   uint16_t ethernet_type = ethertype((uint8_t *)ethernet_header);
 
-  printf("Ethernet type: %u\n", (unsigned int) ethernet_type);
+  print_hdrs(packet, len);
 
   /* Checks if it is an ARP packet */
   if (ethernet_type == ethertype_arp) {
