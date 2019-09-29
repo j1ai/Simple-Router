@@ -198,14 +198,49 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
 
     /* Recompute the checksum in the ICMP header */
-    icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+    /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
     icmp_header->icmp_sum = 0;
-
-    print_hdrs(packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t));
+    icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
     /* Send the packet */
     sr_send_packet(sr, packet, len, interface);
   }
+}
+
+/*---------------------------------------------------------------------
+ * Method: sr_handle_tcp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when the router receives an IP TCP packet.
+ *
+ *---------------------------------------------------------------------*/
+void sr_handle_tcp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+  /* TODO: Do something if it is a TCP IP Packet */
+}
+
+/*---------------------------------------------------------------------
+ * Method: sr_handle_udp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when the router receives an IP UDP packet.
+ *
+ *---------------------------------------------------------------------*/
+void sr_handle_udp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+  /* TODO: Do something if it is a UDP IP Packet */
+}
+
+/*---------------------------------------------------------------------
+ * Method: sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when the router receives an IP packet not destined for this router.
+ *
+ *---------------------------------------------------------------------*/
+void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+  /* TODO: Do something if the IP packet is not for this router */
 }
 
 /*---------------------------------------------------------------------
@@ -219,11 +254,22 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
 {
   uint8_t ip_proto = ip_protocol(packet + sizeof(sr_ethernet_hdr_t));
 
-  if (ip_proto == ip_protocol_icmp) {
-    sr_handle_icmp_ip_packet(sr, packet, len, interface);
+  /* TODO: Check if the packet is for the router. Right now it is hardcoded to True*/
+  int is_ip_packet_for_me = 1;
+
+  if (is_ip_packet_for_me == 1) {
+    if (ip_proto == ip_protocol_icmp) {
+      sr_handle_icmp_ip_packet(sr, packet, len, interface);
+
+    } else if (ip_proto == ip_protocol_tcp) {
+      sr_handle_tcp_ip_packet(sr, packet, len, interface);
+      
+    } else if (ip_proto == ip_protocol_udp) {
+      sr_handle_udp_ip_packet(sr, packet, len, interface);
+    }
 
   } else {
-    /* Do something if it is not an ICMP IP Packet */
+    sr_handle_foreign_ip_packet(sr, packet, len, interface);
   }
 }
 
