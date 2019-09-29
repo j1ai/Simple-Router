@@ -88,7 +88,7 @@ void sr_handlepacket(struct sr_instance* sr,
    uint16_t ethernet_type = ethertype((uint8_t *)ethernet_header);
    printf("Ethernet type: %u\n", (unsigned int) ethernet_type);
    
-   // Checks if it isn ARP packet
+   // Checks if it is an ARP packet
    if (ethernet_type == ethertype_arp) {
      printf("Found ARP Packet!");
    }
