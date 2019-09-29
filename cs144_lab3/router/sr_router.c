@@ -71,6 +71,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 
   /* Note that the ARP header is in the data section of the Ethernet packet */
   sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
+  sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
 
   printf("ARP packet request type: %u\n", (unsigned int) arp_header->ar_op);
   print_hdr_arp((uint8_t *) arp_header);
@@ -94,8 +95,10 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       uint8_t *new_packet = malloc(sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
 
       /* Add fields to the ethernet packet */
-      sr_ethernet_hdr_t *new_packet_headers = (sr_ethernet_hdr_t *) new_packet;
-      new_packet_headers->ether_type = ethertype_arp;
+      sr_ethernet_hdr_t *new_packet_eth_headers = (sr_ethernet_hdr_t *) new_packet;
+      new_packet_eth_headers->ether_type = ethertype_arp;
+      new_packet_eth_headers->ether_dhost = ethernet_header->ether_shost;
+      
 
 
       /* Return a ARP reply */
