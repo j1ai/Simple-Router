@@ -135,10 +135,21 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
   }
 }
 
+/*---------------------------------------------------------------------
+ * Method: sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when the router receives an IP ICMP packet.
+ * It will do the following things:
+ * 1) If it is a ICMP Echo Request:
+ *    Then it will send out an ICMP Echo response
+ * 
+ * 2) 
+ *
+ *---------------------------------------------------------------------*/
 void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
   printf("Received ICMP IP Packet!\n");
-  print_hdr_icmp(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
   /* Check to see if it is a valid ICMP packet */
   if (len < sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t)) {
@@ -146,23 +157,54 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     return;
   }
 
+  print_hdr_icmp(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+
   /* Get the ethernet header */
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
 
   /* Get the IP header */
-  sr_ip_hdr_t *iphdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+  sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
   /* Get the ICMP header */
-  sr_icmp_hdr_t *icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+  sr_icmp_hdr_t *icmp_header = (sr_icmp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
-  if (icmp_hdr->icmp_type == 0x8) {
+  /* Check if it is a ECHO request. If so, send a ECHO reply */
+  if (icmp_header->icmp_type == 0x8) {
     printf("Received ICMP IP Echo Request Packet!\n");
-  }
 
-  fprintf(stderr, "ICMP header:\n");
-  fprintf(stderr, "\ttype: %d\n", icmp_hdr->icmp_type);
-  fprintf(stderr, "\tcode: %d\n", icmp_hdr->icmp_code);
-  fprintf(stderr, "\tchecksum: %d\n", icmp_hdr->icmp_sum);
+    /* Create a new ethernet packet */
+    int new_packet_length = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t);
+    uint8_t *new_packet = malloc(new_packet_length);
+
+    /* Set up the ethernet packet */
+    sr_ethernet_hdr_t *new_packet_eth_headers = (sr_ethernet_hdr_t *) new_packet;
+    memcpy(new_packet_eth_headers->ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(new_packet_eth_headers->ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    new_packet_eth_headers->ether_type = htons(ethertype_ip);
+
+    /* Set up the IP header */
+    sr_ip_hdr_t *new_packet_ip_headers = (sr_ip_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
+    new_packet_ip_headers->ip_tos = 0;  /* ?? */
+    new_packet_ip_headers->ip_len = 0;  /* ?? */
+    new_packet_ip_headers->ip_id = 0;   /* ?? */
+    new_packet_ip_headers->ip_off = 0;  /* ?? */
+    new_packet_ip_headers->ip_ttl = 0;  /* ?? */
+    new_packet_ip_headers->ip_p = 0;    /* ?? */
+    new_packet_ip_headers->ip_sum = 0;  /* ?? */
+    new_packet_ip_headers->ip_src = ip_header->ip_dst;
+    new_packet_ip_headers->ip_dst = ip_header->ip_src;
+
+    /* Set up the ICMP header */
+    sr_icmp_hdr_t *new_packet_icmp_headers = (sr_icmp_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_icmp_hdr_t));
+    new_packet_icmp_headers->icmp_type = 0;
+    new_packet_icmp_headers->icmp_code = 0;
+    new_packet_icmp_headers->icmp_sum = 0; /* ?? */
+
+    /* Send the packet */
+    sr_send_packet(sr, new_packet, new_packet_length, interface);
+
+    free(new_packet);
+  }
 }
 
 /*---------------------------------------------------------------------
