@@ -73,9 +73,6 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
   sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
 
-  printf("ARP packet request type: %u\n", (unsigned int) arp_header->ar_op);
-  print_hdr_arp((uint8_t *) arp_header);
-
   /* Checks if it is an ARP request */
   if (ntohs(arp_header->ar_op) == arp_op_request) {
     printf("Received ARP request packet!\n");
@@ -99,7 +96,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       /* Add fields to the ethernet packet */
       sr_ethernet_hdr_t *new_packet_eth_headers = (sr_ethernet_hdr_t *) new_packet;
       memcpy(new_packet_eth_headers->ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-      memcpy(new_packet_eth_headers->ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+      memcpy(new_packet_eth_headers->ether_shost, arp_header->ar_tip, sizeof(uint8_t) * ETHER_ADDR_LEN);
       new_packet_eth_headers->ether_type = htons(ethertype_arp);
 
       /* Set the ARP header */
