@@ -100,7 +100,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       new_packet_eth_headers->ether_type = htons(ethertype_arp);
 
       /* Set the ARP header */
-      sr_arp_hdr_t *new_packet_arp_headers = (sr_arp_hdr_t *) (new_packet + sizeof(sr_arp_hdr_t));
+      sr_arp_hdr_t *new_packet_arp_headers = (sr_arp_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
       new_packet_arp_headers->ar_pro = arp_header->ar_pro;
       new_packet_arp_headers->ar_hln = arp_header->ar_hln;
       new_packet_arp_headers->ar_pln = arp_header->ar_pln;
