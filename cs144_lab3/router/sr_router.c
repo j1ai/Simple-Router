@@ -30,7 +30,7 @@
  *
  *---------------------------------------------------------------------*/
 
-void sr_init(struct sr_instance* sr)
+void sr_init(struct sr_instance *sr)
 {
     /* REQUIRES */
     assert(sr);
@@ -66,10 +66,10 @@ void sr_init(struct sr_instance* sr)
  *
  *---------------------------------------------------------------------*/
 
-void sr_handlepacket(struct sr_instance* sr,
-        uint8_t * packet/* lent */,
+void sr_handlepacket(struct sr_instance *sr,
+        uint8_t *packet/* lent */,
         unsigned int len,
-        char* interface/* lent */) 
+        char *interface/* lent */) 
 {
   /* REQUIRES */
   assert(sr);
@@ -86,7 +86,7 @@ void sr_handlepacket(struct sr_instance* sr,
    */
   struct sr_ethernet_hdr_t *ethernet_header = (struct sr_ethernet_hdr_t *) packet;
   uint16_t ethernet_type = ethertype((uint8_t *)ethernet_header);
-  
+
   printf("Ethernet type: %u\n", (unsigned int) ethernet_type);
 
   /* Checks if it is an ARP packet */
@@ -103,4 +103,8 @@ void sr_handlepacket(struct sr_instance* sr,
     printf("ERROR! Cannot determine what ethernet type this is! Received ethernet type: %u\n", (unsigned int) ethernet_type);
   }
 }/* end sr_ForwardPacket */
+
+void sr_handle_arp_packet(struct sr_instance* sr, uint8_t *packet, unsigned int len, char *interface) {
+
+}
 
