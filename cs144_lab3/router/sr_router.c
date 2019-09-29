@@ -81,7 +81,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
     printf("Received ARP request packet!\n");
 
     /* Map the source's ip address and the source's MAC address to the ARP table */
-    // struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), (uint32_t) arp_header->ar_tip);
+    /* struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), (uint32_t) arp_header->ar_tip); */
     struct sr_arpentry *arp_cache_entry = malloc(sizeof(struct sr_arpentry));
     arp_cache_entry->ip = 100;
     unsigned char *mac = "pppppp";
