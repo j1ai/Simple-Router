@@ -145,11 +145,10 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     fprintf(stderr, "Failed to print ICMP header, insufficient length\n");
     return;
   }
-  return;
 
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
-  sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) ethernet_header;
-  sr_icmp_hdr_t *icmp_hdr = (sr_icmp_hdr_t *)(ip_header + sizeof(sr_ip_hdr_t));
+  sr_ip_hdr_t *iphdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+  sr_icmp_hdr_t *icmp_hdr = (sr_icmp_hdr_t *)(iphdr + sizeof(sr_ip_hdr_t));
 
   fprintf(stderr, "ICMP header:\n");
   fprintf(stderr, "\ttype: %d\n", icmp_hdr->icmp_type);
