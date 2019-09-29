@@ -156,7 +156,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     fprintf(stderr, "Failed to print ICMP header, insufficient length\n");
     return;
   }
-  
+
   /* Get the ethernet header */
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
 
@@ -182,13 +182,13 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
 
     /* Set up the IP header */
     sr_ip_hdr_t *new_packet_ip_headers = (sr_ip_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
-    new_packet_ip_headers->ip_tos = 0;  /* ?? */
-    new_packet_ip_headers->ip_len = 0;  /* ?? */
-    new_packet_ip_headers->ip_id = 0;   /* ?? */
-    new_packet_ip_headers->ip_off = 0;  /* ?? */
-    new_packet_ip_headers->ip_ttl = 0;  /* ?? */
+    new_packet_ip_headers->ip_tos = ip_header->ip_tos;  /* ?? */
+    new_packet_ip_headers->ip_len = ip_header->ip_len;  /* ?? */
+    new_packet_ip_headers->ip_id = ip_header->ip_id;   /* ?? */
+    new_packet_ip_headers->ip_off = ip_header->ip_off;  /* ?? */
+    new_packet_ip_headers->ip_ttl = ip_header->ip_ttl - 1;  /* ?? */
     new_packet_ip_headers->ip_p = ip_protocol_icmp;    /* ?? */
-    new_packet_ip_headers->ip_sum = 0;  /* ?? */
+    new_packet_ip_headers->ip_sum = ip_header->ip_sum;  /* ?? */
     new_packet_ip_headers->ip_src = ip_header->ip_dst;
     new_packet_ip_headers->ip_dst = ip_header->ip_src;
 
