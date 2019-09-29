@@ -84,14 +84,23 @@ void sr_handlepacket(struct sr_instance* sr,
     So the specifications of an ARP packet is at: http://www.networksorcery.com/enp/protocol/arp.htm
     Note that an ARP packet is wrapped around the packet
    */
-   struct sr_ethernet_hdr_t *ethernet_header = (struct sr_ethernet_hdr_t *) packet;
-   uint16_t ethernet_type = ethertype((uint8_t *)ethernet_header);
-   printf("Ethernet type: %u\n", (unsigned int) ethernet_type);
-   
-   /* Checks if it is an ARP packet */
-   if (ethernet_type == ethertype_arp) {
-     printf("Found ARP Packet!");
-   }
+  struct sr_ethernet_hdr_t *ethernet_header = (struct sr_ethernet_hdr_t *) packet;
+  uint16_t ethernet_type = ethertype((uint8_t *)ethernet_header);
+  
+  printf("Ethernet type: %u\n", (unsigned int) ethernet_type);
 
+  /* Checks if it is an ARP packet */
+  if (ethernet_type == ethertype_arp) {
+    printf("Found ARP Packet!\n");
+  }
+  
+  /* Checks if it is an IP packet */
+  else if (ethernet_type == ethertype_ip) {
+    printf("Found IP packet!\n");
+  }
+
+  else {
+    printf("ERROR! Cannot determine what ethernet type this is! Received ethernet type: %u\n", (unsigned int) ethernet_type);
+  }
 }/* end sr_ForwardPacket */
 
