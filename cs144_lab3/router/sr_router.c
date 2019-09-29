@@ -187,7 +187,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     new_packet_ip_headers->ip_id = ip_header->ip_id;   /* ?? */
     new_packet_ip_headers->ip_off = ip_header->ip_off;  /* ?? */
     new_packet_ip_headers->ip_ttl = ip_header->ip_ttl - 1;  /* ?? */
-    new_packet_ip_headers->ip_p = ip_protocol_icmp;    /* ?? */
+    new_packet_ip_headers->ip_p = htons(ip_protocol_icmp);    /* ?? */
     new_packet_ip_headers->ip_sum = ip_header->ip_sum;  /* ?? */
     new_packet_ip_headers->ip_src = ip_header->ip_dst;
     new_packet_ip_headers->ip_dst = ip_header->ip_src;
@@ -198,6 +198,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     new_packet_icmp_headers->icmp_code = 0;
     new_packet_icmp_headers->icmp_sum = 0; /* ?? */
 
+    print_hdrs(packet, new_packet_length);
     print_hdrs(new_packet, new_packet_length);
 
     /* Send the packet */
