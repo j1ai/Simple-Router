@@ -141,6 +141,35 @@ void sr_set_ether_ip(struct sr_instance* sr, uint32_t ip_nbo)
 } /* -- sr_set_ether_ip -- */
 
 /*--------------------------------------------------------------------- 
+ * Method: sr_get_ether_addr(..)
+ * Scope: Global
+ *
+ * Returns the router's hardware address of an IP.
+ * If it does not exist, it will return NULL.
+ * 
+ * Note that the router's hardware address has been malloced. You will
+ * need to free the resources after that
+ *
+ *---------------------------------------------------------------------*/
+unsigned char *sr_get_ether_addr(struct sr_instance *sr, uint32_t ip) 
+{
+    assert(sr->if_list);
+
+    struct sr_if *if_walker = sr->if_list;
+    while (if_walker != NULL) {
+        if (if_walker->ip == ip) {
+            printf("Found interface with name %s\n", if_walker->name);
+            unsigned char *ether_addr = malloc(sizeof(unsigned char) * ETHER_ADDR_LEN);
+            memcpy(ether_addr, if_walker->addr, ETHER_ADDR_LEN);
+            return ether_addr;
+        }
+
+        if_walker = if_walker->next;
+    }
+    return NULL;
+}
+
+/*--------------------------------------------------------------------- 
  * Method: sr_print_if_list(..)
  * Scope: Global
  *

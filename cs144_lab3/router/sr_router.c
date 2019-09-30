@@ -12,8 +12,9 @@
  **********************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
-
+#include <string.h>
 
 #include "sr_if.h"
 #include "sr_rt.h"
@@ -30,7 +31,7 @@
  *
  *---------------------------------------------------------------------*/
 
-void sr_init(struct sr_instance* sr)
+void sr_init(struct sr_instance *sr)
 {
     /* REQUIRES */
     assert(sr);
@@ -51,6 +52,237 @@ void sr_init(struct sr_instance* sr)
 } /* -- sr_init -- */
 
 /*---------------------------------------------------------------------
+ * Method: sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when the router receives an ARP packet.
+ * It will do the following things:
+ * 1) If it is a ARP request packet:
+ *    a) If it is for the router, then it will return an ARP reply with the router's MAC address
+ *    b) If it is not for the router, then ...
+ * 
+ * 2) If it is an ARP reply packet:
+ *    a)
+ *    b)
+ *
+ * Note: Both the packet buffer and the character's memory are handled
+ * by sr_vns_comm.c that means do NOT delete either.  Make a copy of the
+ * packet instead if you intend to keep it around beyond the scope of
+ * the method call.
+ * 
+ * TODO: This function needs some testing
+ * 
+ *---------------------------------------------------------------------*/
+void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface) 
+{
+  /* Note that the ARP header is in the data section of the Ethernet packet */
+  sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
+  sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+
+  /* Checks if it is an ARP request */
+  if (ntohs(arp_header->ar_op) == arp_op_request) {
+    printf("Received ARP request packet!\n");
+
+    /* Check if it is targetted to the router */
+    unsigned char *router_ether_add = sr_get_ether_addr(sr, arp_header->ar_tip);
+
+    /* If the entry is not there */
+    if (router_ether_add == NULL) {
+      /* TODO: Do something if the entry is not there */
+
+    } else {
+      /* Create a new ethernet packet */
+      uint8_t *new_packet = malloc(sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
+
+      /* Add fields to the ethernet packet */
+      sr_ethernet_hdr_t *new_packet_eth_headers = (sr_ethernet_hdr_t *) new_packet;
+      memcpy(new_packet_eth_headers->ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+      memcpy(new_packet_eth_headers->ether_shost, router_ether_add, sizeof(uint8_t) * ETHER_ADDR_LEN);
+      new_packet_eth_headers->ether_type = htons(ethertype_arp);
+
+      /* Set the ARP header */
+      sr_arp_hdr_t *new_packet_arp_headers = (sr_arp_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
+      new_packet_arp_headers->ar_hrd = arp_header->ar_hrd;
+      new_packet_arp_headers->ar_pro = arp_header->ar_pro;
+      new_packet_arp_headers->ar_hln = arp_header->ar_hln;
+      new_packet_arp_headers->ar_pln = arp_header->ar_pln;
+      new_packet_arp_headers->ar_op = htons(arp_op_reply);
+
+      memcpy(new_packet_arp_headers->ar_sha, router_ether_add, sizeof(unsigned char) * ETHER_ADDR_LEN);
+      new_packet_arp_headers->ar_sip = arp_header->ar_tip;
+      memcpy(new_packet_arp_headers->ar_tha, arp_header->ar_sha, sizeof(unsigned char) * ETHER_ADDR_LEN);
+      new_packet_arp_headers->ar_tip = arp_header->ar_sip;
+
+      printf("Built new ARP reply packet:\n");
+      print_hdrs(new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t));
+
+      /* Return a ARP reply */
+      if (sr_send_packet(sr, new_packet, sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t), interface) != 0) {
+        fprintf(stderr, "ERROR: Packet sent unsuccessfully\n");
+      }
+
+      free(router_ether_add);
+      free(new_packet);
+    }
+
+  } else if (arp_header->ar_op == arp_op_reply) {
+    fprintf(stderr, "TODO: Cannot handle ARP reply packet!\n");
+    /* TODO: Do something if it is an ARP reply packet!*/
+
+  } else {
+    fprintf(stderr, "ERROR! Unknown ARP packet!\n");
+    /* TODO: Do something if it is an unknown ARP packet*/
+  }
+}
+
+/*---------------------------------------------------------------------
+ * Method: sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when the router receives an IP ICMP packet.
+ * It will do the following things:
+ * 1) If it is a ICMP Echo Request:
+ *    Then it will send out an ICMP Echo response
+ * 
+ * 2) 
+ * 
+ * TODO: This function needs some testing
+ *
+ *---------------------------------------------------------------------*/
+void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+  printf("Received ICMP IP Packet!\n");
+
+  /* Check to see if it is a valid ICMP packet */
+  if (len < sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t)) {
+    fprintf(stderr, "Failed to print ICMP header, insufficient length\n");
+    return;
+  }
+
+  /* Get the ethernet header */
+  sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+
+  /* Get the IP header */
+  sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+
+  /* Get the ICMP header */
+  sr_icmp_hdr_t *icmp_header = (sr_icmp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+
+  /* Check if it is a ECHO request. If so, send a ECHO reply */
+  if (icmp_header->icmp_type == 0x8) {
+    printf("Received ICMP IP Echo Request Packet!\n");
+
+    /** 
+     * According to http://www.networksorcery.com/enp/protocol/icmp/msg0.htm#targetText=All%20ICMP%20Echo%20Reply%20messages,in%20the%20resulting%20Echo%20Reply,
+     * we need to send an exact copy of the packet, and only change a few things
+    */
+
+    /* Swap the source and destination MAC addresses */
+    uint8_t new_ether_dhost[6];
+    uint8_t new_ether_shost[6];
+    memcpy(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+
+    /* Swap the source and destination IP addresses */
+    uint32_t new_ip_src = ip_header->ip_dst;
+    uint32_t new_ip_dst = ip_header->ip_src;
+    ip_header->ip_src = new_ip_src;
+    ip_header->ip_dst = new_ip_dst;
+
+    /* Change the ICMP type and code */
+    icmp_header->icmp_code = 0;
+    icmp_header->icmp_type = 0;
+
+    /* Recompute the checksum in the IP header */
+    ip_header->ip_sum = 0;
+    ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
+
+    /* Recompute the checksum in the ICMP header */
+    /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
+    icmp_header->icmp_sum = 0;
+    icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+
+    /* Send the packet */
+    sr_send_packet(sr, packet, len, interface);
+
+  } else {
+    /* TODO: Do something if it is not a ECHO request*/
+    fprintf(stderr, "TODO: Cannot handle non-ECHO request packets!\n");
+  }
+}
+
+/*---------------------------------------------------------------------
+ * Method: sr_handle_tcp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when the router receives an IP TCP packet.
+ *
+ *---------------------------------------------------------------------*/
+void sr_handle_tcp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+  fprintf(stderr, "TODO: Cannot handle TCP IP Packet\n");
+  /* TODO: Do something if it is a TCP IP Packet */
+}
+
+/*---------------------------------------------------------------------
+ * Method: sr_handle_udp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when the router receives an IP UDP packet.
+ *
+ *---------------------------------------------------------------------*/
+void sr_handle_udp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+  fprintf(stderr, "TODO: Cannot handle UDP IP Packet\n");
+  /* TODO: Do something if it is a UDP IP Packet */
+}
+
+/*---------------------------------------------------------------------
+ * Method: sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when the router receives an IP packet not destined for this router.
+ *
+ *---------------------------------------------------------------------*/
+void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+  fprintf(stderr, "TODO: Cannot handle Foreign IP Packet\n");
+  /* TODO: Do something if the IP packet is not for this router */
+}
+
+/*---------------------------------------------------------------------
+ * Method: sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called to handle when an IP packet is received.
+ *
+ *---------------------------------------------------------------------*/
+void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+  uint8_t ip_proto = ip_protocol(packet + sizeof(sr_ethernet_hdr_t));
+
+  /* TODO: Check if the packet is for the router. Right now it is hardcoded to True*/
+  int is_ip_packet_for_me = 1;
+
+  if (is_ip_packet_for_me == 1) {
+    if (ip_proto == ip_protocol_icmp) {
+      sr_handle_icmp_ip_packet(sr, packet, len, interface);
+
+    } else if (ip_proto == ip_protocol_tcp) {
+      sr_handle_tcp_ip_packet(sr, packet, len, interface);
+      
+    } else if (ip_proto == ip_protocol_udp) {
+      sr_handle_udp_ip_packet(sr, packet, len, interface);
+    }
+
+  } else {
+    sr_handle_foreign_ip_packet(sr, packet, len, interface);
+  }
+}
+
+/*---------------------------------------------------------------------
  * Method: sr_handlepacket(uint8_t* p,char* interface)
  * Scope:  Global
  *
@@ -63,13 +295,15 @@ void sr_init(struct sr_instance* sr)
  * by sr_vns_comm.c that means do NOT delete either.  Make a copy of the
  * packet instead if you intend to keep it around beyond the scope of
  * the method call.
+ * 
+ * TODO: This function needs some testing
  *
  *---------------------------------------------------------------------*/
 
-void sr_handlepacket(struct sr_instance* sr,
-        uint8_t * packet/* lent */,
+void sr_handlepacket(struct sr_instance *sr,
+        uint8_t *packet/* lent */,
         unsigned int len,
-        char* interface/* lent */)
+        char *interface/* lent */) 
 {
   /* REQUIRES */
   assert(sr);
@@ -79,6 +313,31 @@ void sr_handlepacket(struct sr_instance* sr,
   printf("*** -> Received packet of length %d \n",len);
 
   /* fill in code here */
+  print_hdrs(packet, len);
 
+  /*
+    So the specifications of an ARP packet is at: http://www.networksorcery.com/enp/protocol/arp.htm
+    Note that an ARP packet is wrapped around the packet
+   */
+  sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+  uint16_t ethernet_type = ethertype((uint8_t *) ethernet_header);
+  
+  /* Checks if it is an IP packet */
+  if (ethernet_type == ethertype_ip) {
+    printf("Found IP packet!\n");
+    sr_handle_ip_packet(sr, packet, len, interface);
+  }
+
+  /* Checks if it is an ARP packet */
+  else if (ethernet_type == ethertype_arp) {
+    printf("Found ARP Packet!\n");
+    sr_handle_arp_packet(sr, packet, len, interface);
+  }
+
+  else {
+    fprintf(stderr, "TODO: Cannot determine what ethernet type this is! Received ethernet type: %u\n", (unsigned int) ethernet_type);
+    /* TODO: Do something for unknown packet type */
+  }
 }/* end sr_ForwardPacket */
+
 
