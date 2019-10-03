@@ -112,7 +112,6 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
                 /** Unpack the packet */
                 uint8_t *packet = cur_packet->buf;
                 sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
-                unsigned int len = cur_packet->len;
                 char *iface = cur_packet->iface;
 
                 /** Create the ICMP packet */
