@@ -112,6 +112,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
                 /** Unpack the packet */
                 uint8_t *packet = cur_packet->buf;
                 sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+                sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
                 char *iface = cur_packet->iface;
 
                 /** Create the ICMP packet */
@@ -133,9 +134,9 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
                 new_ip_header->ip_id = htons(0);
                 new_ip_header->ip_off = htons(IP_DF);
                 new_ip_header->ip_ttl = 10;
-                new_ip_header->ip_p = htons(1);
-                new_ip_header->ip_src = ethernet_header->ether_shost;
-                new_ip_header->ip_dst = ethernet_header->ether_dhost;
+                new_ip_header->ip_p = htons(ip_protocol_icmp);
+                new_ip_header->ip_src = sr_get_interface(sr, iface)->ip;
+                new_ip_header->ip_dst = ip_header->ip_src;
 
                 /** Put the checksum of the IP header */
                 new_ip_header->ip_sum = 0;
