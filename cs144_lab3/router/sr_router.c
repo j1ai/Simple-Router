@@ -76,8 +76,8 @@ void sr_init(struct sr_instance *sr)
 void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface) 
 {
   /* Note that the ARP header is in the data section of the Ethernet packet */
-  sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+  sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
 
   /* Checks if it is an ARP request */
   if (ntohs(arp_header->ar_op) == arp_op_request) {
@@ -126,12 +126,50 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
     }
 
   } else if (arp_header->ar_op == arp_op_reply) {
-    /* fprintf(stderr, "TODO: Cannot handle ARP reply packet!\n"); */
-    /* TODO: Do something if it is an ARP reply packet!*/
+    printf("Got ARP reply packet!\n");
 
+    /**
+     * If it is an incoming ARP reply packet for the router, that means that earlier in time, 
+     * we have sent an ARP request from the router to the network.
+     * This occurs when we receive an IP packet which has an IP address that we don't recognize
+     * 
+     * Thus, what we have to do is to insert the IP and the MAC address from the ARP reply packet
+     * to our ARP cache, get the IP packets that we wanted to send (but has failed because we were
+     * unable to get the MAC address of the destination), and resend the IP packets
+     */
+
+    unsigned char *dst_mac_address = arp_header->ar_tha;
+    uint32_t dst_ip_address = arp_header->ar_tip;
+
+    unsigned char *src_mac_address = arp_header->ar_sha;
+    uint32_t src_ip_address = arp_header->ar_sip;
+
+    struct sr_arpreq *arp_request = sr_arpcache_insert(&sr->cache, src_mac_address, src_ip_address);
+
+    /** Resend the packets in the ARP request */
+    if (arp_request != NULL) {
+      struct sr_packet *cur_packet = arp_request->packets;
+      while (cur_packet != NULL) {
+
+        /** Get details about the packet */
+        int packet_len = cur_packet->len;
+        uint8_t *packet = cur_packet->buf;
+        char *iface = cur_packet->iface;
+
+        /** Inject the ARP reply's src MAC address to the packet we want to send */
+        sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+        memcpy(ethernet_header->ether_dhost, src_mac_address, sizeof(uint8_t) * ETHER_ADDR_LEN);
+
+        /** Send the packet */
+        sr_send_packet(sr, packet, packet_len, iface);
+
+        cur_packet = cur_packet->next;
+      }
+
+      sr_arpreq_destroy(&sr->cache, arp_request);
+    }
   } else {
     fprintf(stderr, "ERROR! Unknown ARP packet!\n");
-    /* TODO: Do something if it is an unknown ARP packet*/
   }
 }
 

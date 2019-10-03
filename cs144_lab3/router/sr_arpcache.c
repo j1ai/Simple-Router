@@ -104,7 +104,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
         if (request->times_sent >= 5) {
            /** 
             * Send ICMP host unreachable to the source address of all packets
-            *  waiting on this request 
+            * waiting on this request 
             */
            struct sr_packet *cur_packet = request->packets;
            while (cur_packet != NULL) {
@@ -166,12 +166,13 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
            sr_arpreq_destroy(&(sr->cache), request);
 
         } else {
-           /** 
-            * send arp request
-               req->sent = now
-               req->times_sent++
-            * */ 
-           /** Create a new ARP request packet */
+            /** 
+             * Send ARP request to the request's IP
+             * Update req->sent = now
+             * Update req->times_sent += 1
+             */ 
+
+            /** Create a new ARP request packet */
         }
     }
 }
