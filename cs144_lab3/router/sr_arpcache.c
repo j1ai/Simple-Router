@@ -1,16 +1,17 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <sched.h>
 #include <string.h>
+
 #include "sr_arpcache.h"
 #include "sr_router.h"
 #include "sr_if.h"
 #include "sr_protocol.h"
+#include "sr_utils.h"
 
 /* This file defines an ARP cache, which is made of two structures: an ARP
    request queue, and ARP cache entries. The ARP request queue holds data about
