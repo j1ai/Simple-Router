@@ -113,18 +113,14 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
                 unsigned int len = cur_packet->len;
                 char *iface = cur_packet->iface;
 
-                /** Get the source and destination addresses from the packet */
-                uint32_t new_packet_src_ip = ethernet_header->ether_shost;
-                uint32_t new_packet_dst_ip = ethernet_header->ether_dhost;
-
                 /** Create the ICMP packet */
                 int new_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
                 uint8_t *new_packet = malloc(new_packet_len);
 
                 /** Set up the ethernet header */
                 sr_ethernet_hdr_t *new_ethernet_header = (sr_ethernet_hdr_t *) new_packet;
-                memcpy(new_ethernet_header->ether_dhost, new_packet_dst_ip, sizeof(uint8_t) * ETHER_ADDR_LEN);
-                memcpy(new_ethernet_header->ether_shost, new_packet_src_ip, sizeof(uint8_t) * ETHER_ADDR_LEN);
+                memcpy(new_ethernet_header->ether_dhost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+                memcpy(new_ethernet_header->ether_shost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
                 new_ethernet_header->ether_type = htons(ethertype_arp);
 
                 /** Set up the IP header */
@@ -137,8 +133,8 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
                 new_ip_header->ip_off = htons(IP_DF);
                 new_ip_header->ip_ttl = 10;
                 new_ip_header->ip_p = htons(1);
-                new_ip_header->ip_src = new_packet_src_ip;
-                new_ip_header->ip_dst = new_packet_dst_ip;
+                new_ip_header->ip_src = ethernet_header->ether_shost;
+                new_ip_header->ip_dst = ethernet_header->ether_dhost;
 
                 /** Put the checksum of the IP header */
                 new_ip_header->ip_sum = 0;
