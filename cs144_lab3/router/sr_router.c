@@ -22,7 +22,6 @@
 #include "sr_protocol.h"
 #include "sr_arpcache.h"
 #include "sr_utils.h"
-#include "sr_vns_comm.c"
 
 /*---------------------------------------------------------------------
  * Method: sr_init(void)
@@ -89,7 +88,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 
     /* If the entry is not there */
     if (router_ether_add == NULL) {
-      /* TODO: Do something if the entry is not there */
+      fprintf(stderr, "ERROR: Failed to handle ARP packet not for the router!\n");
 
     } else {
       /* Create a new ethernet packet */
@@ -129,9 +128,6 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
   } else if (arp_header->ar_op == arp_op_reply) {
     /* fprintf(stderr, "TODO: Cannot handle ARP reply packet!\n"); */
     /* TODO: Do something if it is an ARP reply packet!*/
-    if (sr_arp_req_not_for_us(sr, packet, len, interface) != 0) {
-      fprintf(stderr, "ERROR: Failed to handle ARP packet not for the router!\n");
-    }
 
   } else {
     fprintf(stderr, "ERROR! Unknown ARP packet!\n");
@@ -194,6 +190,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     uint32_t new_ip_dst = ip_header->ip_src;
     ip_header->ip_src = new_ip_src;
     ip_header->ip_dst = new_ip_dst;
+    ip_header->ip_ttl = ip_header->ip_ttl - 1;
 
     /* Change the ICMP type and code */
     icmp_header->icmp_code = 0;
@@ -299,6 +296,11 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
  * by sr_vns_comm.c that means do NOT delete either.  Make a copy of the
  * packet instead if you intend to keep it around beyond the scope of
  * the method call.
+ * 
+ * Note: if the packet is an ARP packet, it will always be destined for the
+ * router. This is because if the packet is not for the router, it would
+ * have already been handled in the sr_arp_req_not_for_us() in sr_vns_comm.c
+ * file.
  * 
  * TODO: This function needs some testing
  *
