@@ -126,8 +126,11 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
     }
 
   } else if (arp_header->ar_op == arp_op_reply) {
-    fprintf(stderr, "TODO: Cannot handle ARP reply packet!\n");
+    /* fprintf(stderr, "TODO: Cannot handle ARP reply packet!\n"); */
     /* TODO: Do something if it is an ARP reply packet!*/
+    if (sr_arp_req_not_for_us(sr, packet, len, interface) != 0) {
+      fprintf(stderr, "ERROR: Failed to handle ARP packet not for the router!\n");
+    }
 
   } else {
     fprintf(stderr, "ERROR! Unknown ARP packet!\n");
