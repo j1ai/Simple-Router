@@ -76,20 +76,6 @@
    handle_arpreq when traversing through the ARP requests linked list.
  */
 
-/* 
-  This function gets called every second. For each request sent out, we keep
-  checking whether we should resend an request or destroy the arp request.
-  See the comments in the header file for an idea of what it should look like.
-*/
-void sr_arpcache_sweepreqs(struct sr_instance *sr) { 
-    struct sr_arpreq *cur_request = sr->cache.requests;
-    while (cur_request != NULL) {
-        struct sr_arpreq *next_request = cur_request->next;
-        handle_arpreq(sr, cur_request);
-        cur_request = next_request;
-    }
-}
-
 /**
  * This function handles whether to send the ARP packet or not based on certain conditions:
  * 
@@ -189,6 +175,20 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             * */ 
            /** Create a new ARP request packet */
         }
+    }
+}
+
+/* 
+  This function gets called every second. For each request sent out, we keep
+  checking whether we should resend an request or destroy the arp request.
+  See the comments in the header file for an idea of what it should look like.
+*/
+void sr_arpcache_sweepreqs(struct sr_instance *sr) { 
+    struct sr_arpreq *cur_request = sr->cache.requests;
+    while (cur_request != NULL) {
+        struct sr_arpreq *next_request = cur_request->next;
+        handle_arpreq(sr, cur_request);
+        cur_request = next_request;
     }
 }
 
