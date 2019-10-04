@@ -52,23 +52,7 @@ void sr_init(struct sr_instance *sr)
 } /* -- sr_init -- */
 
 /**
- * Verifies that the checksum is correct.
- * Returns 1 if it is correct; else returns 0.
- */
-int verify_checksum(uint8_t *data, int len, uint16_t expected_checksum) {
-  uint16_t actual_checksum = cksum(data, len);
-  printf("Actual checksum: %d Expected checksum: %d\n", actual_checksum, expected_checksum);
-  if (actual_checksum == expected_checksum) {
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
-/**
  * Verifies if an IP header's checksum is correct
- * It will not modify the IP header.
- * 
  * Returns 1 if it is correct; else returns 0
 */
 int verify_ip_header_checksum(sr_ip_hdr_t *ip_header) {
@@ -78,6 +62,26 @@ int verify_ip_header_checksum(sr_ip_hdr_t *ip_header) {
   uint16_t expected_checksum = cksum((uint8_t *) ip_header, sizeof(sr_ip_hdr_t));
   ip_header->ip_sum = actual_checksum;
 
+  printf("Actual checksum: %d Expected checksum: %d\n", actual_checksum, expected_checksum);
+  if (actual_checksum == expected_checksum) {
+    return 1;
+  }
+  return 0;
+}
+
+/** 
+ * Verifies if the ICMP header's checksum is correct.
+ * Note that it will need the total length of the packet.
+ * Returns 1 if it is correct; else returns 0.
+ */
+int verify_icmp_packet_checksum(sr_icmp_hdr_t *icmp_header, int len) {
+  uint16_t actual_checksum = icmp_header->icmp_sum;
+
+  icmp_header->icmp_sum = 0;
+  uint16_t expected_checksum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+  icmp_header->icmp_sum = actual_checksum;
+
+  printf("Actual checksum: %d Expected checksum: %d\n", actual_checksum, expected_checksum);
   if (actual_checksum == expected_checksum) {
     return 1;
   }
@@ -244,6 +248,11 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
   /* Get the ICMP header */
   sr_icmp_hdr_t *icmp_header = (sr_icmp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
+  if (verify_icmp_packet_checksum(icmp_header, len) != 1) {
+    fprintf(stderr, "ERROR: ICMP packet's checksum is incorrect\n");
+    return;
+  }
+
   /* Check if it is a ECHO request. If so, send a ECHO reply */
   if (icmp_header->icmp_type == 0x8) {
     printf("Received ICMP IP Echo Request Packet!\n");
@@ -347,8 +356,7 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
 
   /** 
-   * Check the checksum. 
-   * Note that the checksum was computed when checksum was initially set to 0. 
+   * Check the checksum
    */
   if (verify_ip_header_checksum(ip_header) != 1) {
     fprintf(stderr, "ERROR: Checksum is incorrect!\n");
