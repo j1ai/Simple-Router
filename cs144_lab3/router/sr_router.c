@@ -51,6 +51,18 @@ void sr_init(struct sr_instance *sr)
 
 } /* -- sr_init -- */
 
+/**
+ * Verifies that the checksum is correct.
+ * Returns 1 if it is correct; else returns 0.
+ */
+int verify_checksum(uint8_t *data, int len, uint16_t expected_checksum) {
+  if (cksum(data, len) == expected_checksum) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
 /*---------------------------------------------------------------------
  * Method: sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
  * Scope:  Local
@@ -75,6 +87,11 @@ void sr_init(struct sr_instance *sr)
  *---------------------------------------------------------------------*/
 void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface) 
 {
+  /** Check that the packet's length is valid */
+  if (len < sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t)) {
+    fprintf(stderr, "ERROR: ARP Packet does not meet min. length!\n");
+  }
+
   /* Note that the ARP header is in the data section of the Ethernet packet */
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
   sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
@@ -193,7 +210,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
 
   /* Check to see if it is a valid ICMP packet */
   if (len < sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t)) {
-    fprintf(stderr, "Failed to print ICMP header, insufficient length\n");
+    fprintf(stderr, "ERROR: Failed to print ICMP header, insufficient length\n");
     return;
   }
 
@@ -300,12 +317,34 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
  *---------------------------------------------------------------------*/
 void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-  uint8_t ip_proto = ip_protocol(packet + sizeof(sr_ethernet_hdr_t));
+  /** Check that the packet meets min. length */
+  if (len < sizeof(sr_ethernet_hdr_t)) {
+    fprintf(stderr, "ERROR: Packet did not meet min. ethernet requirements!\n");
+    return;
+  }
+  
+  sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
+
+  /** 
+   * Check the checksum. 
+   * Note that the checksum was computed when checksum was initially set to 0. 
+   */
+  uint16_t expected_cksum = ip_header->ip_sum;
+  ip_header->ip_sum = 0;
+  if (verify_checksum(ip_header, len, expected_cksum) != 1) {
+    fprintf(stderr, "ERROR: Checksum is incorrect!\n");
+    return;
+  }
+  ip_header->ip_sum = expected_cksum;
 
   /* TODO: Check if the packet is for the router. Right now it is hardcoded to True*/
   int is_ip_packet_for_me = 1;
 
   if (is_ip_packet_for_me == 1) {
+    
+    /** Get the protocol of the IP packet */
+    uint8_t ip_proto = ip_protocol(ip_header);
+
     if (ip_proto == ip_protocol_icmp) {
       sr_handle_icmp_ip_packet(sr, packet, len, interface);
 
@@ -358,6 +397,12 @@ void sr_handlepacket(struct sr_instance *sr,
 
   /* fill in code here */
   print_hdrs(packet, len);
+
+  /** Check if it meets the ethernet packet size */
+  if (len < sizeof(sr_ethernet_hdr_t)) {
+    fprintf(stderr, "ERROR: Packet does not meet min. length requirements!\n");
+    return;
+  }
 
   /*
     So the specifications of an ARP packet is at: http://www.networksorcery.com/enp/protocol/arp.htm
