@@ -343,7 +343,7 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
   if (is_ip_packet_for_me == 1) {
     
     /** Get the protocol of the IP packet */
-    uint8_t ip_proto = ip_protocol(ip_header);
+    uint8_t ip_proto = ip_protocol((uint8_t *) ip_header);
 
     if (ip_proto == ip_protocol_icmp) {
       sr_handle_icmp_ip_packet(sr, packet, len, interface);
