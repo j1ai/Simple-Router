@@ -292,6 +292,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
 
     /* Send the packet */
     sr_send_packet(sr, packet, len, interface);
+    printf("Sent ICMP Reply Packet!\n");
 
   } else {
     /* TODO: Do something if it is not a ECHO request*/
@@ -355,9 +356,6 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
   
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
 
-  /** 
-   * Check the checksum
-   */
   if (verify_ip_header_checksum(ip_header) != 1) {
     fprintf(stderr, "ERROR: Checksum is incorrect!\n");
     return;
