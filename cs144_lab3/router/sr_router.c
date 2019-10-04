@@ -330,7 +330,7 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
    * Note that the checksum was computed when checksum was initially set to 0. 
    */
   uint16_t expected_cksum = ip_header->ip_sum;
-  ip_header->ip_sum = 0;
+  /** ip_header->ip_sum = 0; */
   if (verify_checksum((uint8_t *)ip_header, len, expected_cksum) != 1) {
     fprintf(stderr, "ERROR: Checksum is incorrect!\n");
     return;
