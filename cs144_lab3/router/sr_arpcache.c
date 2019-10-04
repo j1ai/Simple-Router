@@ -173,6 +173,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
              */ 
 
             /** Create a new ARP request packet */
+            /** TODO: Send an ARP request to the request's IP */
         }
     }
 }
