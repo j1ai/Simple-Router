@@ -65,6 +65,25 @@ int verify_checksum(uint8_t *data, int len, uint16_t expected_checksum) {
   }
 }
 
+/**
+ * Verifies if an IP header's checksum is correct
+ * It will not modify the IP header.
+ * 
+ * Returns 1 if it is correct; else returns 0
+*/
+int verify_ip_header_checksum(sr_ip_hdr_t *ip_header) {
+  uint16_t actual_checksum = ip_header->ip_sum;
+
+  ip_header->ip_sum = 0;
+  uint16_t expected_checksum = cksum((uint8_t *) ip_header, sizeof(sr_ip_hdr_t));
+  ip_header->ip_sum = actual_checksum;
+
+  if (actual_checksum == expected_checksum) {
+    return 1;
+  }
+  return 0;
+}
+
 /*---------------------------------------------------------------------
  * Method: sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
  * Scope:  Local
@@ -331,13 +350,10 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
    * Check the checksum. 
    * Note that the checksum was computed when checksum was initially set to 0. 
    */
-  uint16_t expected_cksum = ip_header->ip_sum;
-  ip_header->ip_sum = 0;
-  if (verify_checksum((uint8_t *)ip_header, sizeof(sr_ip_hdr_t), expected_cksum) != 1) {
+  if (verify_ip_header_checksum(ip_header) != 1) {
     fprintf(stderr, "ERROR: Checksum is incorrect!\n");
     return;
-  }
-  ip_header->ip_sum = expected_cksum;
+  } 
 
   /* TODO: Check if the packet is for the router. Right now it is hardcoded to True*/
   int is_ip_packet_for_me = 1;
