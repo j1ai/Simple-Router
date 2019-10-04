@@ -303,7 +303,7 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
   uint8_t ip_proto = ip_protocol(packet + sizeof(sr_ethernet_hdr_t));
 
   /* TODO: Check if the packet is for the router. Right now it is hardcoded to True*/
-  int is_ip_packet_for_me = 0;
+  int is_ip_packet_for_me = 1;
 
   if (is_ip_packet_for_me == 1) {
     if (ip_proto == ip_protocol_icmp) {
