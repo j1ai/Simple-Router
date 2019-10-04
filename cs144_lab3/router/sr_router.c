@@ -235,7 +235,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
 
   /* Check to see if it is a valid ICMP packet */
   if (len < sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t)) {
-    fprintf(stderr, "ERROR: Failed to print ICMP header, insufficient length\n");
+    fprintf(stderr, "ERROR: Packet did not meet ICMP IP Packet's min. length!\n");
     return;
   }
 
@@ -249,7 +249,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
   sr_icmp_hdr_t *icmp_header = (sr_icmp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
   if (verify_icmp_packet_checksum(icmp_header, len) != 1) {
-    fprintf(stderr, "ERROR: ICMP packet's checksum is incorrect\n");
+    fprintf(stderr, "ERROR: ICMP IP packet's checksum is incorrect\n");
     return;
   }
 
@@ -349,15 +349,15 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
   /** Check that the packet meets min. length */
-  if (len < sizeof(sr_ethernet_hdr_t)) {
-    fprintf(stderr, "ERROR: Packet did not meet min. ethernet requirements!\n");
+  if (len < sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t)) {
+    fprintf(stderr, "ERROR: Packet did not meet min. IP header's length requirements!\n");
     return;
   }
   
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
 
   if (verify_ip_header_checksum(ip_header) != 1) {
-    fprintf(stderr, "ERROR: Checksum is incorrect!\n");
+    fprintf(stderr, "ERROR: IP Header's checksum is incorrect!\n");
     return;
   } 
 
