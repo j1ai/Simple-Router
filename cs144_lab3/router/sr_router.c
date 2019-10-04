@@ -56,7 +56,9 @@ void sr_init(struct sr_instance *sr)
  * Returns 1 if it is correct; else returns 0.
  */
 int verify_checksum(uint8_t *data, int len, uint16_t expected_checksum) {
-  if (cksum(data, len) == expected_checksum) {
+  uint16_t actual_checksum = cksum(data, len);
+  printf("Actual checksum: %d Expected checksum: %d\n", actual_checksum, expected_checksum);
+  if (actual_checksum == expected_checksum) {
     return 1;
   } else {
     return 0;
