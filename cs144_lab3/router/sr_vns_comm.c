@@ -636,6 +636,7 @@ void sr_log_packet(struct sr_instance* sr, uint8_t* buf, int len )
 
 /*-----------------------------------------------------------------------------
  * Method: sr_arp_req_not_for_us()
+ * This method handles ARP packets that are not for the router.
  * Scope: Local
  *
  *---------------------------------------------------------------------------*/
