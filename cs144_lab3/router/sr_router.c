@@ -354,6 +354,21 @@ void sr_handle_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, un
     printf("Sent ICMP Unreachable Reply Packet!\n");
 }
 
+/*---------------------------------------------------------------------
+ * Method: sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when the router receives an IP packet that it's TTL is equal to 0
+ *
+ *---------------------------------------------------------------------*/
+void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+
+    /* TODO: Do something if the IP packet TTL is0 */
+    printf("Received TTL execeeded IP Packet!\n");
+
+}
+
 
 /*---------------------------------------------------------------------
  * Method: sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
@@ -364,8 +379,56 @@ void sr_handle_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, un
  *---------------------------------------------------------------------*/
 void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-  fprintf(stderr, "TODO: Cannot handle Foreign IP Packet\n");
+
   /* TODO: Do something if the IP packet is not for this router */
+    printf("Received Foreign IP Packet!\n");
+
+    /* Get the ethernet header */
+    sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+
+    /* Get the IP header */
+    sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+
+    if (ip_header->ip_ttl <= 1){
+        sr_handle_time_exceeded_ip_packet(sr,packet,len,interface);
+    }
+
+    struct sr_rt *routing_entry = sr->routing_table;
+    struct sr_if *outgoing_interface = NULL;
+
+    while(routing_entry){
+        uint32_t cur_route = ip_header->ip_dst & routing_entry->mask.s_addr;
+        if (cur_route == routing_entry->mask.d_addr){
+            outgoing_interface = sr_get_interface(sr,routing_entry->interface);
+            break;
+        }
+        routing_entry = routing_entry->next;
+    }
+
+    //If there is a matched outgoing interface from routing table
+    if(outgoing_interface){
+
+        /* Swap the source MAC addresses */
+        memcpy(ethernet_header->ether_shost, outgoing_interface->addr, ETHER_ADDR_LEN);
+
+        //Search the ARP Cache
+        sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), ip_header->ip_dst);
+        //If arp cache entry is hit
+        if(arp_cache_entry){
+            //Send frame to next hop
+        }
+        else{
+            //Send ARP request
+        }
+
+    }
+    //ICMP Net Unreachable
+    else{
+        sr_handle_unreachable_ip_packet(sr,packet,len,interface);
+    }
+
+
+
 }
 
 bool is_ip_packet_for_me(struct sr_instance *sr, uint32_t ip_dest){
