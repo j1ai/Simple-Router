@@ -301,15 +301,70 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
 }
 
 /*---------------------------------------------------------------------
- * Method: sr_handle_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Method: sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when the router receives an Non-Existent route to destination IP
+ * (no matching entry in routing table).
+ *
+ *---------------------------------------------------------------------*/
+void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+    printf("Received Net Unreachable IP Packet!\n");
+
+    /* Get the ethernet header */
+    sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+
+    /* Get the IP header */
+    sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+
+    /* Get the ICMP header */
+    sr_icmp_t3_hdr *icmp_header = (sr_icmp_t3_hdr *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+
+
+    /* Swap the source and destination MAC addresses */
+    uint8_t new_ether_dhost[6];
+    uint8_t new_ether_shost[6];
+    memcpy(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+
+    /* Swap the source and destination IP addresses */
+    uint32_t new_ip_src = ip_header->ip_dst;
+    uint32_t new_ip_dst = ip_header->ip_src;
+    ip_header->ip_src = new_ip_src;
+    ip_header->ip_dst = new_ip_dst;
+    ip_header->ip_ttl = ip_header->ip_ttl - 1;
+
+    /* Change the ICMP type and code */
+    icmp_header->icmp_code = 0;
+    icmp_header->icmp_type = 3;
+
+    /* Recompute the checksum in the IP header */
+    ip_header->ip_sum = 0;
+    ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
+
+    /* Recompute the checksum in the ICMP header */
+    /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
+    icmp_header->icmp_sum = 0;
+    icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+
+    /* Send the packet */
+    sr_send_packet(sr, packet, len, interface);
+    printf("Sent ICMP Net Unreachable Reply Packet!\n");
+}
+
+/*---------------------------------------------------------------------
+ * Method: sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
  * Scope:  Local
  *
  * This method is called when the router receives an IP TCP/ UDP packet.
  *
  *---------------------------------------------------------------------*/
-void sr_handle_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+void sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-    printf("Received Unreachable IP Packet!\n");
+    printf("Received Port Unreachable IP Packet!\n");
 
     /* Get the ethernet header */
     sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
@@ -351,7 +406,61 @@ void sr_handle_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, un
 
     /* Send the packet */
     sr_send_packet(sr, packet, len, interface);
-    printf("Sent ICMP Unreachable Reply Packet!\n");
+    printf("Sent ICMP Port Unreachable Reply Packet!\n");
+}
+
+/*---------------------------------------------------------------------
+ * Method: sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when five ARP requests were sent to next-hop IP without a response.
+ *
+ *---------------------------------------------------------------------*/
+void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+{
+    printf("Received Host Unreachable IP Packet!\n");
+
+    /* Get the ethernet header */
+    sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+
+    /* Get the IP header */
+    sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+
+    /* Get the ICMP header */
+    sr_icmp_t3_hdr *icmp_header = (sr_icmp_t3_hdr *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+
+
+    /* Swap the source and destination MAC addresses */
+    uint8_t new_ether_dhost[6];
+    uint8_t new_ether_shost[6];
+    memcpy(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+
+    /* Swap the source and destination IP addresses */
+    uint32_t new_ip_src = ip_header->ip_dst;
+    uint32_t new_ip_dst = ip_header->ip_src;
+    ip_header->ip_src = new_ip_src;
+    ip_header->ip_dst = new_ip_dst;
+    ip_header->ip_ttl = ip_header->ip_ttl - 1;
+
+    /* Change the ICMP type and code */
+    icmp_header->icmp_code = 1;
+    icmp_header->icmp_type = 3;
+
+    /* Recompute the checksum in the IP header */
+    ip_header->ip_sum = 0;
+    ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
+
+    /* Recompute the checksum in the ICMP header */
+    /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
+    icmp_header->icmp_sum = 0;
+    icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+
+    /* Send the packet */
+    sr_send_packet(sr, packet, len, interface);
+    printf("Sent ICMP Host Unreachable Reply Packet!\n");
 }
 
 /*---------------------------------------------------------------------
@@ -424,7 +533,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
     }
     //ICMP Net Unreachable
     else{
-        sr_handle_unreachable_ip_packet(sr,packet,len,interface);
+        sr_handle_net_unreachable_ip_packet(sr,packet,len,interface);
     }
 
 
@@ -476,7 +585,7 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
       sr_handle_icmp_ip_packet(sr, packet, len, interface);
 
     } else if (ip_proto == ip_protocol_tcp || ip_proto == ip_protocol_udp) {
-      sr_handle_unreachable_ip_packet(sr, packet, len, interface);
+      sr_handle_port_unreachable_ip_packet(sr, packet, len, interface);
     }
 
   } else {
