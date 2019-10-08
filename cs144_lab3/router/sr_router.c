@@ -530,7 +530,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
               2.  free entry
             */
             memcpy(ethernet_header->ether_dhost, arp_cache_entry->mac, sizeof(uint8_t) * ETHER_ADDR_LEN);
-            sr_send_packet(sr, packet, len, outgoing_interface);
+            sr_send_packet(sr, packet, len, outgoing_interface->name);
             free(arp_cache_entry);
             printf("Sent Foreign IP Packet!\n");
         } else {
@@ -541,7 +541,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
             time (&cur_time);
             arp_req->sent = cur_time;
             arp_req->times_sent = 1;
-            sr_send_packet(sr, packet->buf, len, outgoing_interface->name);
+            sr_send_packet(sr, packet, len, outgoing_interface->name);
         }
 
     }

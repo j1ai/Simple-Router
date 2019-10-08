@@ -178,7 +178,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             struct sr_packet *curr_packet = request->packets;
             struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), request->ip,
                         curr_packet->buf, curr_packet->len, curr_packet->iface);
-            struct sr_packet *new_packet = arp_req->packets
+            struct sr_packet *new_packet = arp_req->packets;
 
             /** Send an ARP request to the request's IP */
             sr_send_packet(sr, new_packet->buf, new_packet->len, new_packet->iface);
