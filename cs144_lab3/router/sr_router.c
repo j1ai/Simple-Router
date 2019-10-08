@@ -181,7 +181,6 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
      */
 
     unsigned char *dst_mac_address = arp_header->ar_tha;
-    uint32_t dst_ip_address = arp_header->ar_tip;
 
     unsigned char *src_mac_address = arp_header->ar_sha;
     uint32_t src_ip_address = arp_header->ar_sip;
@@ -319,7 +318,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
     sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
     /* Get the ICMP header */
-    sr_icmp_t3_hdr *icmp_header = (sr_icmp_t3_hdr *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+    sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
 
     /* Swap the source and destination MAC addresses */
@@ -373,7 +372,7 @@ void sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
     /* Get the ICMP header */
-    sr_icmp_t3_hdr *icmp_header = (sr_icmp_t3_hdr *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+    sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
 
     /* Swap the source and destination MAC addresses */
@@ -427,7 +426,7 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
     /* Get the ICMP header */
-    sr_icmp_t3_hdr *icmp_header = (sr_icmp_t3_hdr *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+    sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
 
     /* Swap the source and destination MAC addresses */
@@ -507,31 +506,32 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 
     while(routing_entry){
         uint32_t cur_route = ip_header->ip_dst & routing_entry->mask.s_addr;
-        if (cur_route == routing_entry->mask.d_addr){
+        if (cur_route == routing_entry->mask.s_addr){
             outgoing_interface = sr_get_interface(sr,routing_entry->interface);
             break;
         }
         routing_entry = routing_entry->next;
     }
 
-    //If there is a matched outgoing interface from routing table
+    /** If there is a matched outgoing interface from routing table */
     if(outgoing_interface){
 
         /* Swap the source MAC addresses */
         memcpy(ethernet_header->ether_shost, outgoing_interface->addr, ETHER_ADDR_LEN);
 
-        //Search the ARP Cache
-        sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), ip_header->ip_dst);
-        //If arp cache entry is hit
+        /** Search the ARP Cache */
+        struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), ip_header->ip_dst);
+
+        /** If arp cache entry is hit */
         if(arp_cache_entry){
-            //Send frame to next hop
+            /** Send frame to next hop */
         }
         else{
-            //Send ARP request
+            /** Send ARP request */
         }
 
     }
-    //ICMP Net Unreachable
+    /** ICMP Net Unreachable */
     else{
         sr_handle_net_unreachable_ip_packet(sr,packet,len,interface);
     }
@@ -540,15 +540,18 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 
 }
 
-bool is_ip_packet_for_me(struct sr_instance *sr, uint32_t ip_dest){
+/**
+ * Returns 1 if it is the packet for the router; else return 0
+ */
+int is_ip_packet_for_me(struct sr_instance *sr, uint32_t ip_dest){
     struct sr_if *temp_if_list = sr->if_list;
     while(temp_if_list){
         if (temp_if_list->ip == ip_dest){
-            return true;
+            return 1;
         }
         temp_if_list = temp_if_list->next;
     }
-    return false;
+    return 0;
 }
 
 /*---------------------------------------------------------------------
@@ -573,10 +576,7 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
     return;
   } 
 
-  /* TODO: Check if the packet is for the router. Right now it is hardcoded to True*/
-
-
-  if (is_ip_packet_for_me(sr,ip_header->ip_dst)) {
+  if (is_ip_packet_for_me(sr,ip_header->ip_dst) == 1) {
     
     /** Get the protocol of the IP packet */
     uint8_t ip_proto = ip_protocol((uint8_t *) ip_header);
