@@ -180,7 +180,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
      * unable to get the MAC address of the destination), and resend the IP packets
      */
 
-    unsigned char *dst_mac_address = arp_header->ar_tha;
+    /** unsigned char *dst_mac_address = arp_header->ar_tha; */
 
     unsigned char *src_mac_address = arp_header->ar_sha;
     uint32_t src_ip_address = arp_header->ar_sip;
