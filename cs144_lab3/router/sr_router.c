@@ -523,25 +523,25 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
         struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), ip_header->ip_dst);
 
         /** If arp cache entry is hit */
-        if(arp_cache_entry){
-
-            //Send frame to next hop:
-            //    1.  use next_hop_ip->mac mapping in entry to send the packet
-            //    2.  free entry
+        if (arp_cache_entry) {
+            /**
+              Send frame to next hop:
+              1.  use next_hop_ip->mac mapping in entry to send the packet
+              2.  free entry
+            */
             memcpy(ethernet_header->ether_dhost, arp_cache_entry->mac, sizeof(uint8_t) * ETHER_ADDR_LEN);
             sr_send_packet(sr, packet, len, outgoing_interface);
             free(arp_cache_entry);
             printf("Sent Foreign IP Packet!\n");
-        }
-        else{
-            //Send ARP request (insert ARP request to ARP queue)
+        } else {
+            /* Create ARP packet and send ARP request */
             struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst,
-                                                              packet, len, outgoing_interface);
+                                                              packet, len, outgoing_interface->name);
             time_t cur_time;
             time (&cur_time);
             arp_req->sent = cur_time;
-            request->times_sent = 1;
-            handle_arpreq(arp_req);
+            arp_req->times_sent = 1;
+            sr_send_packet(sr, packet->buf, len, outgoing_interface->name);
         }
 
     }
@@ -549,9 +549,6 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
     else{
         sr_handle_net_unreachable_ip_packet(sr,packet,len,interface);
     }
-
-
-
 }
 
 /**
