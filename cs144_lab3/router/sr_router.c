@@ -506,7 +506,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 
     while(routing_entry){
         uint32_t cur_route = ip_header->ip_dst & routing_entry->mask.s_addr;
-        if (cur_route == routing_entry->mask.s_addr){
+        if (cur_route == routing_entry->dest.s_addr){
             outgoing_interface = sr_get_interface(sr,routing_entry->interface);
             break;
         }
