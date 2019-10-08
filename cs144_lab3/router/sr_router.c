@@ -546,10 +546,11 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 int is_ip_packet_for_me(struct sr_instance *sr, uint32_t ip_dest){
     struct sr_if *temp_if_list = sr->if_list;
     while(temp_if_list){
-        if (temp_if_list->ip == ip_dest){
-            return 1;
-        }
-        temp_if_list = temp_if_list->next;
+      print_addr_ip_int(temp_if_list->ip);
+      if (temp_if_list->ip == ip_dest){
+          return 1;
+      }
+      temp_if_list = temp_if_list->next;
     }
     return 0;
 }
@@ -576,7 +577,7 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
     return;
   } 
 
-  if (is_ip_packet_for_me(sr,ip_header->ip_dst) == 1) {
+  if (is_ip_packet_for_me(sr, ip_header->ip_dst) == 1) {
     
     /** Get the protocol of the IP packet */
     uint8_t ip_proto = ip_protocol((uint8_t *) ip_header);
