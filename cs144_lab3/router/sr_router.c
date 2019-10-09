@@ -334,6 +334,8 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
     uint32_t new_ip_dst = ip_header->ip_src;
     ip_header->ip_src = new_ip_src;
     ip_header->ip_dst = new_ip_dst;
+
+    ip_header->ip_p = 1;
     ip_header->ip_ttl = ip_header->ip_ttl - 1;
 
     /* Change the ICMP type and code */
@@ -374,7 +376,6 @@ void sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     /* Get the ICMP header */
     sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
-
     /* Swap the source and destination MAC addresses */
     uint8_t new_ether_dhost[6];
     uint8_t new_ether_shost[6];
@@ -388,6 +389,8 @@ void sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     uint32_t new_ip_dst = ip_header->ip_src;
     ip_header->ip_src = new_ip_src;
     ip_header->ip_dst = new_ip_dst;
+
+    ip_header->ip_p = 1;
     ip_header->ip_ttl = ip_header->ip_ttl - 1;
 
     /* Change the ICMP type and code */
@@ -428,7 +431,6 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     /* Get the ICMP header */
     sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
-
     /* Swap the source and destination MAC addresses */
     uint8_t new_ether_dhost[6];
     uint8_t new_ether_shost[6];
@@ -442,6 +444,8 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     uint32_t new_ip_dst = ip_header->ip_src;
     ip_header->ip_src = new_ip_src;
     ip_header->ip_dst = new_ip_dst;
+
+    ip_header->ip_p = 1;
     ip_header->ip_ttl = ip_header->ip_ttl - 1;
 
     /* Change the ICMP type and code */
