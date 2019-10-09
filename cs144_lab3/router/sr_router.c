@@ -535,15 +535,13 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
     else{
         sr_handle_net_unreachable_ip_packet(sr,packet,len,interface);
     }
-
-
-
 }
 
 /**
  * Returns 1 if it is the packet for the router; else return 0
  */
 int is_ip_packet_for_me(struct sr_instance *sr, uint32_t ip_dest){
+  
     print_addr_ip_int(ip_dest);
     struct sr_if *temp_if_list = sr->if_list;
     while(temp_if_list){
