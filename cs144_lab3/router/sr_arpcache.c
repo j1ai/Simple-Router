@@ -102,6 +102,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
 
         /** Check if the number of times sent is greater than 5*/
         if (request->times_sent >= 5) {
+	   printf("ARP times_sent >= 5!\n");
            /**
             * Send ICMP host unreachable to the source address of all packets
             * waiting on this request
@@ -166,6 +167,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
            sr_arpreq_destroy(&(sr->cache), request);
 
         } else {
+	    printf("Sent arp request %d!\n", request->times_sent + 1);
             /**
              * Send ARP request to the request's IP
              * Update req->sent = now

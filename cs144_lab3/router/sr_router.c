@@ -513,6 +513,20 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
         routing_entry = routing_entry->next;
     }
 
+
+    struct sr_rt *routing_entry2 = sr->routing_table;
+    struct sr_if *source_interface = NULL;
+
+    while(routing_entry2){
+        uint32_t cur_route = ip_header->ip_src & routing_entry2->mask.s_addr;
+        if (cur_route == routing_entry2->dest.s_addr){
+            source_interface = sr_get_interface(sr,routing_entry2->interface);
+	    break;
+        }
+        routing_entry2 = routing_entry2->next;
+    }
+
+
     /** If there is a matched outgoing interface from routing table */
     if(outgoing_interface){
 
@@ -521,8 +535,8 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 
         /** Search the ARP Cache */
         struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), ip_header->ip_dst);
-
-        /** If arp cache entry is hit */
+        
+/** If arp cache entry is hit */
         if (arp_cache_entry) {
             /**
               Send frame to next hop:
@@ -534,14 +548,46 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
             free(arp_cache_entry);
             printf("Sent Foreign IP Packet!\n");
         } else {
-            /* Create ARP packet and send ARP request */
-            struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst,
-                                                              packet, len, outgoing_interface->name);
+	    printf("Cache missed!\n");
+	    /* Create new ethernet packet */
+	    unsigned int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
+	    uint8_t *arp_packet = malloc(arp_packet_len);
+
+	    /* Add fields to ethernet packet */
+	    struct sr_if *src_interface = sr_get_interface(sr, interface);
+	    sr_ethernet_hdr_t *arp_packet_eth_headers = (sr_ethernet_hdr_t *) arp_packet;
+	    memcpy(arp_packet_eth_headers->ether_dhost, outgoing_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+	    memcpy(arp_packet_eth_headers->ether_shost, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+	    arp_packet_eth_headers->ether_type = htons(ethertype_arp);
+ 
+	    /* Set ARP header */
+	    sr_arp_hdr_t *arp_packet_arp_headers = (sr_arp_hdr_t *) (arp_packet + sizeof(sr_ethernet_hdr_t));
+	    arp_packet_arp_headers->ar_hrd = htons(arp_hrd_ethernet);
+	    arp_packet_arp_headers->ar_pro = htons(ethertype_ip);
+	    arp_packet_arp_headers->ar_hln = ETHER_ADDR_LEN;
+	    arp_packet_arp_headers->ar_pln = sizeof(ethertype_ip);
+	    arp_packet_arp_headers->ar_op  = htons(arp_op_request);
+
+	   		
+	    memcpy(arp_packet_arp_headers->ar_sha, source_interface->addr/*src_interface->addr*/, sizeof(uint8_t) * ETHER_ADDR_LEN);
+	    arp_packet_arp_headers->ar_sip = ip_header->ip_src;/*src_interface->ip;*/
+	
+            uint8_t broadcast_mac_addr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+	    memcpy(arp_packet_arp_headers->ar_tha, broadcast_mac_addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+	    arp_packet_arp_headers->ar_tip = ip_header->ip_dst;	    
+
+	    printf("ARP Packet below!! \n");
+	    print_hdrs(arp_packet, arp_packet_len);
+
+	    /* Send ARP request */
+	    struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst,
+                                                              arp_packet, arp_packet_len, interface);
             time_t cur_time;
             time (&cur_time);
             arp_req->sent = cur_time;
             arp_req->times_sent = 1;
-            sr_send_packet(sr, packet, len, outgoing_interface->name);
+	     
+            sr_send_packet(sr, arp_packet, arp_packet_len, interface);
         }
 
     }
