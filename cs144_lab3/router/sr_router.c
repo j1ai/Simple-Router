@@ -272,7 +272,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     /* Swap the source and destination IP addresses */
     uint32_t new_ip_src = ip_header->ip_dst;
     uint32_t new_ip_dst = ip_header->ip_src;
-    ip_header->ip_src = sr_get_interface(sr, interface)->ip;
+    ip_header->ip_src = new_ip_src;
     ip_header->ip_dst = new_ip_dst;
     ip_header->ip_ttl = ip_header->ip_ttl - 1;
 
@@ -329,11 +329,12 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
     memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
     memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
     memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    ethernet_header->ether_type = htons(ethertype_ip);
 
     /* Swap the source and destination IP addresses */
     uint32_t new_ip_src = ip_header->ip_dst;
     uint32_t new_ip_dst = ip_header->ip_src;
-    ip_header->ip_src = sr_get_interface(sr, interface)->ip;
+    ip_header->ip_src = new_ip_src;
     ip_header->ip_dst = new_ip_dst;
 
     ip_header->ip_p = 1;
@@ -385,11 +386,12 @@ void sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
     memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
     memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    ethernet_header->ether_type = htons(ethertype_ip);
 
     /* Swap the source and destination IP addresses */
     uint32_t new_ip_src = ip_header->ip_dst;
     uint32_t new_ip_dst = ip_header->ip_src;
-    ip_header->ip_src = sr_get_interface(sr, interface)->ip;
+    ip_header->ip_src = new_ip_src;
     ip_header->ip_dst = new_ip_dst;
 
     ip_header->ip_p = 1;
@@ -441,11 +443,12 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
     memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
     memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    ethernet_header->ether_type = htons(ethertype_ip);
 
     /* Swap the source and destination IP addresses */
     uint32_t new_ip_src = ip_header->ip_dst;
     uint32_t new_ip_dst = ip_header->ip_src;
-    ip_header->ip_src = sr_get_interface(sr, interface)->ip;
+    ip_header->ip_src = new_ip_src;
     ip_header->ip_dst = new_ip_dst;
 
     ip_header->ip_p = 1;
