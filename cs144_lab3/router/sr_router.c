@@ -272,7 +272,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     /* Swap the source and destination IP addresses */
     uint32_t new_ip_src = ip_header->ip_dst;
     uint32_t new_ip_dst = ip_header->ip_src;
-    ip_header->ip_src = new_ip_src;
+    ip_header->ip_src = sr_get_interface(sr, interface)->ip;
     ip_header->ip_dst = new_ip_dst;
     ip_header->ip_ttl = ip_header->ip_ttl - 1;
 
@@ -333,7 +333,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
     /* Swap the source and destination IP addresses */
     uint32_t new_ip_src = ip_header->ip_dst;
     uint32_t new_ip_dst = ip_header->ip_src;
-    ip_header->ip_src = new_ip_src;
+    ip_header->ip_src = sr_get_interface(sr, interface)->ip;
     ip_header->ip_dst = new_ip_dst;
 
     ip_header->ip_p = 1;
@@ -389,7 +389,7 @@ void sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     /* Swap the source and destination IP addresses */
     uint32_t new_ip_src = ip_header->ip_dst;
     uint32_t new_ip_dst = ip_header->ip_src;
-    ip_header->ip_src = new_ip_src;
+    ip_header->ip_src = sr_get_interface(sr, interface)->ip;
     ip_header->ip_dst = new_ip_dst;
 
     ip_header->ip_p = 1;
@@ -425,6 +425,7 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     printf("Received Host Unreachable IP Packet!\n");
 
     /* Get the ethernet header */
+    int packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
     sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
 
     /* Get the IP header */
@@ -444,7 +445,7 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     /* Swap the source and destination IP addresses */
     uint32_t new_ip_src = ip_header->ip_dst;
     uint32_t new_ip_dst = ip_header->ip_src;
-    ip_header->ip_src = new_ip_src;
+    ip_header->ip_src = sr_get_interface(sr, interface)->ip;
     ip_header->ip_dst = new_ip_dst;
 
     ip_header->ip_p = 1;
@@ -461,10 +462,10 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     /* Recompute the checksum in the ICMP header */
     /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
     icmp_header->icmp_sum = 0;
-    icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+    icmp_header->icmp_sum = cksum(icmp_header, packet_len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
     /* Send the packet */
-    sr_send_packet(sr, packet, len, interface);
+    sr_send_packet(sr, packet, packet_len, interface);
     printf("Sent ICMP Host Unreachable Reply Packet!\n");
 }
 
