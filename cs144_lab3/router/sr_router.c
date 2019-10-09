@@ -312,6 +312,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
     printf("Received Net Unreachable IP Packet!\n");
 
     /* Get the ethernet header */
+    int packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
     sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
 
     /* Get the IP header */
@@ -349,10 +350,10 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
     /* Recompute the checksum in the ICMP header */
     /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
     icmp_header->icmp_sum = 0;
-    icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+    icmp_header->icmp_sum = cksum(icmp_header, packet_len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
     /* Send the packet */
-    sr_send_packet(sr, packet, len, interface);
+    sr_send_packet(sr, packet, packet_len, interface);
     printf("Sent ICMP Net Unreachable Reply Packet!\n");
 }
 
@@ -368,6 +369,7 @@ void sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     printf("Received Port Unreachable IP Packet!\n");
 
     /* Get the ethernet header */
+    int packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
     sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
 
     /* Get the IP header */
@@ -404,10 +406,10 @@ void sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
     /* Recompute the checksum in the ICMP header */
     /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
     icmp_header->icmp_sum = 0;
-    icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+    icmp_header->icmp_sum = cksum(icmp_header, packet_len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
     /* Send the packet */
-    sr_send_packet(sr, packet, len, interface);
+    sr_send_packet(sr, packet, packet_len, interface);
     printf("Sent ICMP Port Unreachable Reply Packet!\n");
 }
 
@@ -502,7 +504,8 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
     sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
     if (ip_header->ip_ttl <= 1){
-        sr_handle_time_exceeded_ip_packet(sr,packet,len,interface);
+        sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
+        return;
     }
 
     struct sr_rt *routing_entry = sr->routing_table;
@@ -544,14 +547,9 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 /**
  * Returns 1 if it is the packet for the router; else return 0
  */
-int is_ip_packet_for_me(struct sr_instance *sr, uint32_t ip_dest){
-
-    sr_print_if_list(sr);
-  
-    print_addr_ip_int(ip_dest);
+int is_ip_packet_for_me(struct sr_instance *sr, uint32_t ip_dest){  
     struct sr_if *temp_if_list = sr->if_list;
     while(temp_if_list){
-      print_addr_ip_int(temp_if_list->ip);
       if (temp_if_list->ip == ip_dest){
           return 1;
       }
