@@ -88,6 +88,40 @@ int verify_icmp_packet_checksum(sr_icmp_hdr_t *icmp_header, int len) {
   return 0;
 }
 
+void sr_setup_new_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *src, uint8_t *dst, uint16_t ether_type)
+{
+  memcpy(new_ethernet_header->ether_dhost, dst, ETHER_ADDR_LEN);
+  memcpy(new_ethernet_header->ether_shost, src, ETHER_ADDR_LEN);
+  new_ethernet_header->ether_type = htons(ether_type);
+}
+
+void sr_setup_new_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, enum sr_ip_protocol protocol, uint32_t src, uint32_t dst)
+{
+  new_ip_header->ip_hl = sizeof(sr_ip_hdr_t) / 4;
+	new_ip_header->ip_v = 4;
+  new_ip_header->ip_tos = 0;
+  new_ip_header->ip_len = htons(56);
+  new_ip_header->ip_id = htons(0);
+  new_ip_header->ip_off = htons(IP_DF);
+  new_ip_header->ip_ttl = htons(64);
+  new_ip_header->ip_p = protocol;
+  new_ip_header->ip_src = src;
+  new_ip_header->ip_dst = dst;
+  new_ip_header->ip_sum = 0;
+	new_ip_header->ip_sum = cksum(new_ip_header, sizeof(sr_ip_hdr_t));
+}
+
+void sr_setup_new_icmp3_headers(sr_icmp_t3_hdr_t *new_icmp_header, sr_ip_hdr_t *ip_header)
+{
+  new_icmp_header->icmp_type = 3;
+  new_icmp_header->icmp_code = 0;
+  new_icmp_header->unused = 0;
+  new_icmp_header->next_mtu = 0;
+  memcpy(new_icmp_header->data, ip_header, ICMP_DATA_SIZE);
+	new_icmp_header->icmp_sum = 0;
+  new_icmp_header->icmp_sum = cksum(new_icmp_header, sizeof(sr_icmp_t3_hdr_t));
+}
+
 /*---------------------------------------------------------------------
  * Method: sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
  * Scope:  Local
@@ -320,40 +354,6 @@ struct sr_rt *sr_get_routing_entry_using_lpm(struct sr_instance *sr, uint32_t ip
   }
 
   return routing_entry;
-}
-
-void sr_setup_new_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *src, uint8_t *dst, enum sr_ethertype ether_type)
-{
-  memcpy(new_ethernet_header->ether_dhost, dst, ETHER_ADDR_LEN);
-  memcpy(new_ethernet_header->ether_shost, src, ETHER_ADDR_LEN);
-  new_ethernet_header->ether_type = htons(ether_type);
-}
-
-void sr_setup_new_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, enum sr_ip_protocol protocol, uint32_t src, uint32_t dst)
-{
-  new_ip_header->ip_hl = sizeof(sr_ip_hdr_t) / 4;
-	new_ip_header->ip_v = 4;
-  new_ip_header->ip_tos = 0;
-  new_ip_header->ip_len = htons(56);
-  new_ip_header->ip_id = htons(0);
-  new_ip_header->ip_off = htons(IP_DF);
-  new_ip_header->ip_ttl = htons(64);
-  new_ip_header->ip_p = protocol;
-  new_ip_header->ip_src = src;
-  new_ip_header->ip_dst = dst;
-  new_ip_header->ip_sum = 0;
-	new_ip_header->ip_sum = cksum(new_ip_header, sizeof(sr_ip_hdr_t));
-}
-
-void sr_setup_new_icmp3_headers(sr_icmp_t3_hdr_t *new_icmp_header, sr_ip_hdr_t *ip_header)
-{
-  new_icmp_header->icmp_type = 3;
-  new_icmp_header->icmp_code = 0;
-  new_icmp_header->unused = 0;
-  new_icmp_header->next_mtu = 0;
-  memcpy(new_icmp_header->data, ip_header, ICMP_DATA_SIZE);
-	new_icmp_header->icmp_sum = 0;
-  new_icmp_header->icmp_sum = cksum(new_icmp_header, sizeof(sr_icmp_t3_hdr_t));
 }
 
 void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
