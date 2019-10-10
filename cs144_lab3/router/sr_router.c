@@ -370,17 +370,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
   sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
-  /** We need to look for which interface to send out the packet to the client */
-  struct sr_rt *longest_pref_match = sr_get_routing_entry_using_lpm(sr, ip_header->ip_src);
-
-  if (longest_pref_match == NULL) {
-    printf("Cannot find interface to the client!\n");
-    return;
-  }
-
-  /** We need to send out the packet back to the client, so we look it up in the ARP cache */
-  struct sr_arpentry *arp_entry = sr_arpcache_lookup(&sr->cache, longest_pref_match->gw.s_addr);
-  /** struct sr_if *out_iface = sr_get_interface(sr, longest_pref_match->interface); */
+  /** The port we will be sending out the response */
   struct sr_if *out_iface = sr_get_interface(sr, interface);
 
   /** Make a new packet */
