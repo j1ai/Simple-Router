@@ -359,7 +359,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
 
   /* Send the packet */
   sr_send_packet(sr, new_packet, packet_len, interface);
-  printf("Sent ICMP Net Unreachable Reply Packet!\n");
+  printf("Sent ICMP Net Unreachable Reply Packet!=======================================\n");
 }
 
 /*---------------------------------------------------------------------
