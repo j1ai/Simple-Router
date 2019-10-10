@@ -172,7 +172,6 @@ void sr_print_routing_entry(struct sr_rt* entry)
 
     printf("%s\t\t",inet_ntoa(entry->dest));
     printf("%s\t",inet_ntoa(entry->gw));
-    printf("Gateway: %s\n", inet_ntoa(entry->gw));
     printf("%s\t",inet_ntoa(entry->mask));
     printf("%s\n",entry->interface);
 
