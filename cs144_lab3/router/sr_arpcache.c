@@ -207,7 +207,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             memcpy(arp_packet_arp_headers->ar_tha, broadcast_mac_addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
             arp_packet_arp_headers->ar_tip = request->ip;	    
 
-            printf("ARP Packet below!! \n");
+            printf("ARP Packet below being sent!==============!! \n");
             print_hdrs(arp_packet, arp_packet_len);
 
             sr_send_packet(sr, arp_packet, arp_packet_len, out_iface);
