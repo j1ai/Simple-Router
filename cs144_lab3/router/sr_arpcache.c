@@ -205,7 +205,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             arp_packet_arp_headers->ar_op  = htons(arp_op_request);
 
             memcpy(arp_packet_arp_headers->ar_sha, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-            arp_packet_arp_headers->ar_sip = src_interface->ip;
+            arp_packet_arp_headers->ar_sip = sr_get_interface(sr, out_iface)->ip;
         
             /** uint8_t broadcast_mac_addr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}; */
             uint8_t broadcast_mac_addr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
