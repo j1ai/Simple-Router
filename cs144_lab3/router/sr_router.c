@@ -199,7 +199,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       free(new_packet);
     }
 
-  } else if (arp_header->ar_op == arp_op_reply) {
+  } else if (ntohs(arp_header->ar_op) == arp_op_reply) {
     printf("Got ARP reply packet! ###########################################################\n");
 
     /**
