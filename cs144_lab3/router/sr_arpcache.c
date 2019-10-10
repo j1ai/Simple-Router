@@ -93,9 +93,6 @@
  *
  */
 void send_arp_req_packet_broadcast(struct sr_instance *sr, char * out_iface, uint32_t dest_ip) {
-    assert(sr);
-    assert(out_iface);
-    assert(dest_ip);
     /* Get the interface from the router */
 	/*fprintf(stderr, "********* send arp request ***********\n");*/
     struct sr_if *out_if = sr_get_interface(sr, out_iface);
