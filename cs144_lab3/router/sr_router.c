@@ -322,11 +322,11 @@ struct sr_rt *sr_get_routing_entry_using_lpm(struct sr_instance *sr, uint32_t ip
   return routing_entry;
 }
 
-void sr_setup_new_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *src, uint8_t *dst)
+void sr_setup_new_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *src, uint8_t *dst, enum sr_ethertype ether_type)
 {
   memcpy(new_ethernet_header->ether_dhost, dst, ETHER_ADDR_LEN);
   memcpy(new_ethernet_header->ether_shost, src, ETHER_ADDR_LEN);
-  new_ethernet_header->ether_type = htons(ethertype_ip);
+  new_ethernet_header->ether_type = htons(ether_type);
 }
 
 void sr_setup_new_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, enum sr_ip_protocol protocol, uint32_t src, uint32_t dst)
@@ -389,7 +389,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   sr_icmp_t3_hdr_t *new_icmp_header = (sr_icmp_t3_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
   /** Set up the headers */
-  sr_setup_new_ethernet_headers(new_ethernet_header, out_iface->addr, ethernet_header->ether_shost);
+  sr_setup_new_ethernet_headers(new_ethernet_header, out_iface->addr, ethernet_header->ether_shost, ethertype_ip);
   sr_setup_new_ip_headers(new_ip_header, ip_header->ip_hl, ip_protocol_icmp, out_iface->ip, ip_header->ip_src);
   sr_setup_new_icmp3_headers(new_icmp_header, ip_header);
 
