@@ -396,7 +396,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
 }
 
 /*---------------------------------------------------------------------
- * Method: sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Method: sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
  * Scope:  Local
  *
  * This method is called when the router receives an IP TCP/ UDP packet.
