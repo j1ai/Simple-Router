@@ -530,7 +530,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
     struct sr_if *source_interface = sr_get_interface(sr, routing_entry2->interface);
 
     /* Swap the source MAC addresses */
-    memcpy(ethernet_header->ether_shost, outgoing_interface->addr, ETHER_ADDR_LEN);
+    /** memcpy(ethernet_header->ether_shost, outgoing_interface->addr, ETHER_ADDR_LEN); */
 
     /** Search the ARP Cache */
     struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), ip_header->ip_dst);
