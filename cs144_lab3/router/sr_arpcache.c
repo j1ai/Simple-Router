@@ -97,15 +97,11 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
     time_t cur_time;
     time (&cur_time);
 
-    if (request == NULL) {
-        printf("IT IS NULL!\n");
-    }
-
     /** Check if the time sent before is greater than 1 second */
     if (difftime(cur_time, request->sent) > 1.0) {
         /** Check if the number of times sent is greater than 5*/
         if (request->times_sent >= 5) {
-	    printf("ARP times_sent >= 5!\n");
+	        printf("ARP times_sent >= 5!\n");
            /**
             * Send ICMP host unreachable to the source address of all packets
             * waiting on this request
@@ -173,6 +169,8 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
 	        printf("Sent arp request %d!\n", request->times_sent + 1);
             request->sent = cur_time;
             request->times_sent += 1;
+
+            printf("I AM HERE\n");
             
             /**
              * Send ARP request to the request's IP
