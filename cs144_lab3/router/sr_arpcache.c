@@ -102,63 +102,64 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
 
         /** Check if the number of times sent is greater than 5*/
         if (request->times_sent >= 5) {
-	   printf("ARP times_sent >= 5!\n");
+	     printf("ARP times_sent >= 5!\n");
            /**
             * Send ICMP host unreachable to the source address of all packets
             * waiting on this request
             */
            struct sr_packet *cur_packet = request->packets;
            while (cur_packet != NULL) {
+                
+                sr_handle_host_unreachable_ip_packet(sr, cur_packet->buf,  cur_packet->len, cur_packet->iface)
+                // /** Unpack the packet */
+                // uint8_t *packet = cur_packet->buf;
+                // sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+                // sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
+                // char *iface = cur_packet->iface;
 
-                /** Unpack the packet */
-                uint8_t *packet = cur_packet->buf;
-                sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
-                sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
-                char *iface = cur_packet->iface;
+                // /** Create the ICMP packet */
+                // int new_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
+                // uint8_t *new_packet = malloc(new_packet_len);
 
-                /** Create the ICMP packet */
-                int new_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
-                uint8_t *new_packet = malloc(new_packet_len);
+                // /** Set up the ethernet header */
+                // sr_ethernet_hdr_t *new_ethernet_header = (sr_ethernet_hdr_t *) new_packet;
+                // memcpy(new_ethernet_header->ether_dhost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+                // memcpy(new_ethernet_header->ether_shost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+                // new_ethernet_header->ether_type = htons(ethertype_arp);
 
-                /** Set up the ethernet header */
-                sr_ethernet_hdr_t *new_ethernet_header = (sr_ethernet_hdr_t *) new_packet;
-                memcpy(new_ethernet_header->ether_dhost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-                memcpy(new_ethernet_header->ether_shost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-                new_ethernet_header->ether_type = htons(ethertype_arp);
+                // /** Set up the IP header */
+                // sr_ip_hdr_t *new_ip_header = (sr_ip_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
+                // new_ip_header->ip_hl = sizeof(sr_ip_hdr_t) / 4;
+                // new_ip_header->ip_v = htons(4);
+                // new_ip_header->ip_tos = 0;
+                // new_ip_header->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
+                // new_ip_header->ip_id = htons(0);
+                // new_ip_header->ip_off = htons(IP_DF);
+                // new_ip_header->ip_ttl = 10;
+                // new_ip_header->ip_p = htons(ip_protocol_icmp);
+                // new_ip_header->ip_src = sr_get_interface(sr, iface)->ip;
+                // new_ip_header->ip_dst = ip_header->ip_src;
 
-                /** Set up the IP header */
-                sr_ip_hdr_t *new_ip_header = (sr_ip_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
-                new_ip_header->ip_hl = sizeof(sr_ip_hdr_t) / 4;
-                new_ip_header->ip_v = htons(4);
-                new_ip_header->ip_tos = 0;
-                new_ip_header->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
-                new_ip_header->ip_id = htons(0);
-                new_ip_header->ip_off = htons(IP_DF);
-                new_ip_header->ip_ttl = 10;
-                new_ip_header->ip_p = htons(ip_protocol_icmp);
-                new_ip_header->ip_src = sr_get_interface(sr, iface)->ip;
-                new_ip_header->ip_dst = ip_header->ip_src;
+                // /** Put the checksum of the IP header */
+                // new_ip_header->ip_sum = 0;
+                // new_ip_header->ip_sum = cksum(new_ip_header, sizeof(sr_ip_hdr_t));
 
-                /** Put the checksum of the IP header */
-                new_ip_header->ip_sum = 0;
-                new_ip_header->ip_sum = cksum(new_ip_header, sizeof(sr_ip_hdr_t));
+                // /** Set up the ICMP 3 header (note that destination unreachable messages are ICMP 3 not ICMP only) */
+                // sr_icmp_t3_hdr_t *new_icmp3_header = (sr_icmp_t3_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+                // new_icmp3_header->icmp_type = htons(3);
+                // new_icmp3_header->icmp_code = htons(1);
+                // new_icmp3_header->unused = 0;
+                // new_icmp3_header->next_mtu = 0;
 
-                /** Set up the ICMP 3 header (note that destination unreachable messages are ICMP 3 not ICMP only) */
-                sr_icmp_t3_hdr_t *new_icmp3_header = (sr_icmp_t3_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
-                new_icmp3_header->icmp_type = htons(3);
-                new_icmp3_header->icmp_code = htons(1);
-                new_icmp3_header->unused = 0;
-                new_icmp3_header->next_mtu = 0;
+                // /** Put the IP header and the first 8 bits of the original datagram's data */
+                // memcpy(new_icmp3_header->data, new_ip_header, sizeof(uint8_t) * ICMP_DATA_SIZE);
 
-                /** Put the IP header and the first 8 bits of the original datagram's data */
-                memcpy(new_icmp3_header->data, new_ip_header, sizeof(uint8_t) * ICMP_DATA_SIZE);
+                // /** Put the checksum of the ICMP 3 header */
+                // new_icmp3_header->icmp_sum = cksum(new_icmp3_header, sizeof(sr_icmp_t3_hdr_t));
 
-                /** Put the checksum of the ICMP 3 header */
-                new_icmp3_header->icmp_sum = cksum(new_icmp3_header, sizeof(sr_icmp_t3_hdr_t));
-
-                /** Send the packet */
-                sr_send_packet(sr, new_packet, new_packet_len, iface);
-                free(new_packet);
+                // /** Send the packet */
+                // sr_send_packet(sr, new_packet, new_packet_len, iface);
+                // free(new_packet);
 
                 cur_packet = cur_packet->next;
            }
