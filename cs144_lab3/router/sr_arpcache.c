@@ -168,6 +168,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
 
         } else {
 	        printf("Sent arp request %d!\n", request->times_sent + 1);
+            
             /**
              * Send ARP request to the request's IP
              * Update req->sent = now
@@ -214,7 +215,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             printf("ARP Packet below being sent!==============!! \n");
             print_hdrs(arp_packet, arp_packet_len);
 
-            sr_send_packet(sr, arp_packet, arp_packet_len, out_iface);
+            sr_send_packet(sr, arp_packet, arp_packet_len, request->packets->iface);
             free(arp_packet);
 
             return;
