@@ -555,7 +555,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
       uint16_t new_ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
       ip_header->ip_sum = new_ip_sum;
 
-      struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, source_interface->name);
+      struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name);
       /* send ARP request, this is a broadcast */
       handle_arpreq(arp_req, sr);
     }

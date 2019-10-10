@@ -212,7 +212,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
              * Update req->sent = now
              * Update req->times_sent += 1
              */
-            send_arp_req_packet_broadcast(sr, (request->packets)->iface, request->ip);
+            send_arp_req_packet_broadcast(sr, request->packets->iface, request->ip);
             request->sent = cur_time;
             request->times_sent += 1;
             printf("DONE\n");
