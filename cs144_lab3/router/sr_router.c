@@ -333,11 +333,11 @@ void sr_setup_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *
   new_ethernet_header->ether_type = htons(ethertype_ip);
 }
 
-void sr_setup_ip_headers(sr_ip_hdr_t *new_ip_header, uint32_t src, uint32_t dst)
+void sr_setup_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, uint32_t src, uint32_t dst)
 {
-  new_ip_header->ip_hl = 4;
-	new_ip_header->ip_v = 4; 			/* header version */
-  new_ip_header->ip_tos = 0;        /* type of service */
+  new_ip_header->ip_hl = len;
+	new_ip_header->ip_v = 4;
+  new_ip_header->ip_tos = 0;
 }
 
 void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
@@ -372,6 +372,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
 
   sr_setup_ethernet_headers(new_ethernet_header, out_iface->addr, ethernet_header->ether_shost);
 
+  sr_setup_ip_headers(new_ip_header, ip_header->ip_hl, out_iface->ip, ip_header->ip_src);
   new_ip_header->ip_hl = 4;/*ip_header->ip_hl;			header length */
 	new_ip_header->ip_v = 4; /*ip_header->ip_v; 	*/		/* header version */
   new_ip_header->ip_tos = 0;        /* type of service */
