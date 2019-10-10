@@ -338,6 +338,7 @@ void sr_setup_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, uint32_t src, 
   new_ip_header->ip_hl = sizeof(sr_ip_hdr_t) / 4;
 	new_ip_header->ip_v = 4;
   new_ip_header->ip_tos = 0;
+
 }
 
 void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
@@ -376,7 +377,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   
   new_ip_header->ip_len = htons(56); /* ip_hdr->ip_len;         total length */
   new_ip_header->ip_id = 0; /*ip_hdr->ip_id;*/          /* identification */
-  new_ip_header->ip_off = htons(0b0100000000000000);        /* fragment offset field */
+  new_ip_header->ip_off = htons(IP_DF);        /* fragment offset field */
   new_ip_header->ip_ttl = 64;                    /* time to live */
   new_ip_header->ip_p = ip_protocol_icmp;            /* protocol */
   /* source and destination should be altered */
