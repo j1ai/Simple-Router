@@ -530,7 +530,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
     struct sr_if *source_interface = sr_get_interface(sr, routing_entry2->interface);
 
     /* Swap the source MAC addresses */
-    memcpy(ethernet_header->ether_shost, outgoing_interface->addr, ETHER_ADDR_LEN);
+    /*memcpy(ethernet_header->ether_shost, outgoing_interface->addr, ETHER_ADDR_LEN);*/
 
     /** Search the ARP Cache */
     struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), ip_header->ip_dst);
@@ -548,40 +548,10 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
         printf("Sent Foreign IP Packet!\n");
     } else {
 	    printf("Cache missed!\n");
-	    /* Create new ethernet packet */
-	    unsigned int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
-	    uint8_t *arp_packet = malloc(arp_packet_len);
 
-	    struct sr_if *src_interface = sr_get_interface(sr, interface);
-
-	    /* Add fields to ethernet packet */
-	    sr_ethernet_hdr_t *arp_packet_eth_headers = (sr_ethernet_hdr_t *) arp_packet;
-      uint8_t ether_dhost_val[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-	    memcpy(arp_packet_eth_headers->ether_dhost, ether_dhost_val /** outgoing_interface->addr*/, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    memcpy(arp_packet_eth_headers->ether_shost, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    arp_packet_eth_headers->ether_type = htons(ethertype_arp);
- 
-	    /* Set ARP header */
-	    sr_arp_hdr_t *arp_packet_arp_headers = (sr_arp_hdr_t *) (arp_packet + sizeof(sr_ethernet_hdr_t));
-	    arp_packet_arp_headers->ar_hrd = htons(arp_hrd_ethernet);
-	    arp_packet_arp_headers->ar_pro = htons(ethertype_ip);
-	    arp_packet_arp_headers->ar_hln = ETHER_ADDR_LEN;
-	    arp_packet_arp_headers->ar_pln = sizeof(ethertype_ip);
-	    arp_packet_arp_headers->ar_op  = htons(arp_op_request);
-
-	    memcpy(arp_packet_arp_headers->ar_sha, source_interface->addr/*src_interface->addr*/, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    arp_packet_arp_headers->ar_sip = ip_header->ip_src;/*src_interface->ip;*/
-	
-      /** uint8_t broadcast_mac_addr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}; */
-      uint8_t broadcast_mac_addr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	    memcpy(arp_packet_arp_headers->ar_tha, broadcast_mac_addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    arp_packet_arp_headers->ar_tip = ip_header->ip_dst;	    
-
-	    printf("ARP Packet below!! \n");
-	    print_hdrs(arp_packet, arp_packet_len);
 
 	    /* Send ARP request */
-	    struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, source_interface->name);
+	    struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name);
       handle_arpreq(arp_req);
       /**sr_send_packet(sr, arp_packet, arp_packet_len, interface);*/
       /**free(arp_packet);*/
