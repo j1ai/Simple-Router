@@ -180,6 +180,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             char *out_iface = request->packets->iface;
 
             printf("out_iface: %s\n", out_iface);
+            printf("sr_get_interface: %d\n", sr_get_interface(sr, out_iface)->ip);
 
             /* Create new ethernet packet */
             unsigned int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
