@@ -333,12 +333,16 @@ void sr_setup_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *
   new_ethernet_header->ether_type = htons(ethertype_ip);
 }
 
-void sr_setup_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, uint32_t src, uint32_t dst)
+void sr_setup_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, enum sr_ip_protocol protocol, uint32_t src, uint32_t dst)
 {
   new_ip_header->ip_hl = sizeof(sr_ip_hdr_t) / 4;
 	new_ip_header->ip_v = 4;
   new_ip_header->ip_tos = 0;
-
+  new_ip_header->ip_len = htons(56);
+  new_ip_header->ip_id = htons(0);
+  new_ip_header->ip_off = htons(IP_DF);
+  new_ip_header->ip_ttl = htons(64);
+  new_ip_header->ip_p = protocol;
 }
 
 void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
@@ -373,13 +377,8 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
 
   sr_setup_ethernet_headers(new_ethernet_header, out_iface->addr, ethernet_header->ether_shost);
 
-  sr_setup_ip_headers(new_ip_header, ip_header->ip_hl, out_iface->ip, ip_header->ip_src);
-  
-  new_ip_header->ip_len = htons(56); /* ip_hdr->ip_len;         total length */
-  new_ip_header->ip_id = 0; /*ip_hdr->ip_id;*/          /* identification */
-  new_ip_header->ip_off = htons(IP_DF);        /* fragment offset field */
-  new_ip_header->ip_ttl = htons(64);
-  new_ip_header->ip_p = ip_protocol_icmp;            /* protocol */
+  sr_setup_ip_headers(new_ip_header, ip_header->ip_hl, ip_protocol_icmp, out_iface->ip, ip_header->ip_src);
+
   /* source and destination should be altered */
   new_ip_header->ip_src = out_iface->ip;/* ip_hdr->ip_dst;  */      /* source address */
   new_ip_header->ip_dst = ip_header->ip_src;        /* dest address */
