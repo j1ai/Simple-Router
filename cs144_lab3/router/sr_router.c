@@ -336,8 +336,8 @@ void sr_setup_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *
 void sr_setup_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, uint32_t src, uint32_t dst)
 {
   new_ip_header->ip_hl = len;
-	new_ip_header->ip_v = 4;
-  new_ip_header->ip_tos = 0;
+	new_ip_header->ip_v = htons(4);
+  new_ip_header->ip_tos = htons(0);
 }
 
 void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
