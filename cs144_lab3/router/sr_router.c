@@ -459,8 +459,8 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
   struct sr_if *packet_if = sr_get_interface(sr,interface);
 
   /** Set up the headers */
-  sr_setup_new_ethernet_headers(new_ethernet_header, ethernet_header->ether_shost, ethernet_header->ether_dhost, ethernet_header->ether_type);
-  sr_setup_new_ip_headers(new_ip_header, sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t), ip_protocol_icmp, ip_header->ip_src, packet_if->ip);
+  sr_setup_new_ethernet_headers(new_ethernet_header, ethernet_header->ether_dhost, ethernet_header->ether_shost, ethernet_header->ether_type);
+  sr_setup_new_ip_headers(new_ip_header, sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t), ip_protocol_icmp, ip_header->ip_dst, ip_header->ip_src);
   sr_setup_new_icmp3_headers(new_icmp_header, ip_header, 3, 1);
 
   /** Send the packet */
@@ -567,8 +567,8 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 	    print_hdrs(arp_packet, arp_packet_len);
 
 	    /* Send ARP request */
-	    struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst,
-                                                              arp_packet, arp_packet_len, interface);
+	    struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), routing_entry->gw.s_addr,
+                                                              arp_packet, arp_packet_len, routing_entry->interface);
       time_t cur_time;
       time (&cur_time);
       arp_req->sent = cur_time;
