@@ -94,7 +94,7 @@
  */
 void send_arp_req_packet_broadcast(struct sr_instance *sr, char * out_iface, uint32_t dest_ip) {
     /* Get the interface from the router */
-	/*fprintf(stderr, "********* send arp request ***********\n");*/
+	fprintf(stderr, "********* send arp request ***********\n");
     struct sr_if *out_if = sr_get_interface(sr, out_iface);
     int packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
     uint8_t *arp_req_hdr = (uint8_t *)malloc(packet_len);
@@ -127,7 +127,7 @@ void send_arp_req_packet_broadcast(struct sr_instance *sr, char * out_iface, uin
     
     /* Send arp request packet */
     sr_send_packet(sr, arp_req_hdr, packet_len, out_if->name);
-	/*printf("************ send arp packet *************\n");*/
+	printf("************ send arp packet *************\n");
     free(arp_req_hdr);
     return;
 }
