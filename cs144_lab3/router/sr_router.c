@@ -572,7 +572,8 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
         printf("Sent Foreign IP Packet!\n");
     } else {
 	    printf("Cache missed!\n");
-      sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, interface);
+      struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, interface);
+      sr_arpcache_sweepreqs(arp_req);
       return;
 
 	    /* Create new ethernet packet */
