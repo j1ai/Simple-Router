@@ -388,7 +388,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
 
   /* source and destination should be altered */
 
-  new_icmp_header->icmp_type = htons(3);
+  new_icmp_header->icmp_type = 3;
   new_icmp_header->icmp_code = 0;
   new_icmp_header->unused = 0;
   new_icmp_header->next_mtu = 0;
