@@ -225,12 +225,14 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
   See the comments in the header file for an idea of what it should look like.
 */
 void sr_arpcache_sweepreqs(struct sr_instance *sr) {
-    struct sr_arpreq *cur_request = sr->cache.requests;
-    while (cur_request != NULL) {
-        struct sr_arpreq *next_request = cur_request->next;
-        handle_arpreq(sr, cur_request);
-        cur_request = next_request;
+    struct sr_arpreq *arp_req = sr->cache.requests;
+    struct sr_arpreq *arp_req_next = NULL;
+    while (arp_req != NULL) {
+		arp_req_next = arp_req->next;
+        handle_arpreq(arp_req, sr);
+		arp_req = arp_req_next;
     }
+    return;
 }
 
 /* You should not need to touch the rest of this code. */
