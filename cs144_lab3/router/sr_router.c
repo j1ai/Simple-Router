@@ -581,7 +581,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 
 	    /* Send ARP request */
 	    struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet /** arp_packet */, len /** arp_packet_len */, source_interface->name);
-      handle_arpreq(arp_req)
+      handle_arpreq(arp_req);
       /**sr_send_packet(sr, arp_packet, arp_packet_len, interface);*/
       /**free(arp_packet);*/
     }
