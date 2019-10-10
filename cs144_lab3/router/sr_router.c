@@ -548,6 +548,18 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
         printf("Sent Foreign IP Packet!\n");
     } else {
 	    printf("Cache missed!\n");
+      ip_header->ip_ttl--;
+
+      /* recompute the packet checksum over the modified header */
+      ip_header->ip_sum = 0;
+      uint16_t new_ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
+      ip_header->ip_sum = new_ip_sum;
+
+      struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, source_interface->name);
+      /* send ARP request, this is a broadcast */
+      handle_arpreq(arp_req, sr);
+      return;
+          
 	    /* Create new ethernet packet */
 	    unsigned int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
 	    uint8_t *arp_packet = malloc(arp_packet_len);
