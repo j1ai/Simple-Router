@@ -547,14 +547,16 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
  * Returns 1 if it is the packet for the router; else return 0
  */
 int is_ip_packet_for_me(struct sr_instance *sr, uint32_t ip_dest){  
-    struct sr_if *temp_if_list = sr->if_list;
-    while(temp_if_list){
-      if (temp_if_list->ip == ip_dest){
-          return 1;
-      }
-      temp_if_list = temp_if_list->next;
+  print_addr_ip_int(ip_dest);
+  struct sr_if *temp_if_list = sr->if_list;
+  while(temp_if_list){
+    print_addr_ip_int(temp_if_list->ip);
+    if (temp_if_list->ip == ip_dest){
+        return 1;
     }
-    return 0;
+    temp_if_list = temp_if_list->next;
+  }
+  return 0;
 }
 
 /*---------------------------------------------------------------------
