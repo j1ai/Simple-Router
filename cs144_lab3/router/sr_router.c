@@ -516,7 +516,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
     }
     routing_entry = routing_entry->next;
   }
-
+  
   /** If there is a matched outgoing interface from routing table */
   if(outgoing_interface){
 
