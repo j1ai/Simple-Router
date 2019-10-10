@@ -586,7 +586,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
       arp_req->sent = cur_time;
       arp_req->times_sent = 1;
   
-      sr_send_packet(sr, arp_packet, arp_packet_len, interface);
+      /* sr_send_packet(sr, arp_packet, arp_packet_len, interface); */
     }
   }
   /** ICMP Net Unreachable */
