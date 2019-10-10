@@ -492,8 +492,31 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
  *---------------------------------------------------------------------*/
 void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-  /* TODO: Do something if the IP packet TTL is0 */
+  /* TODO: Do something if the IP packet TTL is 0 */
   printf("Received TTL execeeded IP Packet!\n");
+
+  sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+  sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
+
+  /** Create a new packet */
+  int new_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
+  uint8_t *new_packet = malloc(sizeof(uint8_t) * new_packet_len);
+
+  /** Set the ethernet header */
+  sr_ethernet_hdr_t *new_ethernet_header = (sr_ethernet_hdr_t *) new_packet;
+  sr_ip_hdr_t *new_ip_header = (sr_ip_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
+  sr_icmp_t3_hdr_t *new_icmp_header = (sr_icmp_t3_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+
+  sr_setup_new_ethernet_headers(new_ethernet_header, ethernet_header->ether_dhost, ethernet_header->ether_shost, ethernet_header->ether_type);
+  sr_setup_new_ip_headers(new_ip_header, sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t), ip_protocol_icmp, ip_header->ip_dst, ip_header->ip_src);
+  sr_setup_new_icmp3_headers(new_icmp_header, ip_header, 11, 0);
+
+  printf("Sending TTL exceeded IP Packet\n");
+
+  if (sr_send_packet(sr, new_packet, new_packet_len, interface) != 0) {
+    fprintf(stderr, "ERROR: Packet sent unsuccessfully\n");
+  }
+  free(new_packet);
 }
 
 
@@ -549,7 +572,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
     } else {
 	    printf("Cache missed!\n");
 	    /* Create new ethernet packet */
-	    unsigned int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
+	    int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
 	    uint8_t *arp_packet = malloc(arp_packet_len);
 
 	    /* Add fields to ethernet packet */
@@ -567,7 +590,6 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 	    arp_packet_arp_headers->ar_pln = sizeof(ethertype_ip);
 	    arp_packet_arp_headers->ar_op  = htons(arp_op_request);
 
-	   		
 	    memcpy(arp_packet_arp_headers->ar_sha, source_interface->addr/*src_interface->addr*/, sizeof(uint8_t) * ETHER_ADDR_LEN);
 	    arp_packet_arp_headers->ar_sip = ip_header->ip_src;/*src_interface->ip;*/
 	
