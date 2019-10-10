@@ -327,6 +327,14 @@ struct sr_arpreq *sr_arpcache_queuereq(struct sr_arpcache *cache,
         fprintf(stderr, "PACKET IS NULL!\n");
     }
 
+    if (!packet_len) {
+        fprintf(stderr, "PACKET IS NULL!\n");
+    }
+
+    if (!iface) {
+        fprintf(stderr, "PACKET IS NULL!\n");
+    }
+
     /* Add the packet to the list of packets for this request */
     if (packet && packet_len && iface) {
         struct sr_packet *new_pkt = (struct sr_packet *)malloc(sizeof(struct sr_packet));
