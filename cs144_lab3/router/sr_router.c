@@ -302,6 +302,9 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
 /*---------------------------------------------------------------------
  * Method: sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
  * Scope:  Local
+ * ========================================================================================================================
+ * ========================================================================================================================
+ * ========================================================================================================================
  *
  * This method is called when the router receives an Non-Existent route to destination IP
  * (no matching entry in routing table).
@@ -349,13 +352,13 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   new_icmp_header->icmp_code = 0;
   new_icmp_header->icmp_type = 3;
   new_icmp_header->icmp_sum = 0;
-  new_icmp_header->icmp_sum = cksum(new_icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+  new_icmp_header->icmp_sum = cksum(new_icmp_header, sizeof(sr_icmp_t3_hdr_t));
 
   printf("Sending ICMP Net Unreachable Reply Packet:\n");
-  print_hdrs(packet, len);
+  print_hdrs(new_packet, packet_len);
 
   /* Send the packet */
-  sr_send_packet(sr, packet, len, interface);
+  sr_send_packet(sr, new_packet, packet_len, interface);
   printf("Sent ICMP Net Unreachable Reply Packet!\n");
 }
 
