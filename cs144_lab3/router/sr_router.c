@@ -285,12 +285,6 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     return;
   }
 
-  if (ip_header->ip_ttl == 1) {
-    printf("TTL is 1! Sending TTL time out packet!\n");
-    sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
-    return;
-  }
-
   /* Check if it is a ECHO request. If so, send a ECHO reply */
   if (icmp_header->icmp_type == 0x8) {
     printf("Received ICMP IP Echo Request Packet!\n");
@@ -523,7 +517,7 @@ void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, 
 
   if (sr_send_packet(sr, new_packet, new_packet_len, interface) != 0) {
     fprintf(stderr, "ERROR: Packet sent unsuccessfully\n");
-    
+
   } else {
     printf("Sent TTL exceeded IP Packet\n");
   }
@@ -549,11 +543,6 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 
   /* Get the IP header */
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
-
-  if (ip_header->ip_ttl <= 1){
-    sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
-    return;
-  }
 
   struct sr_rt *routing_entry = sr_get_routing_entry_using_lpm(sr, ip_header->ip_dst);
   struct sr_rt *routing_entry2 = sr_get_routing_entry_using_lpm(sr, ip_header->ip_src);
@@ -626,6 +615,12 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
 
   if (verify_ip_header_checksum(ip_header) != 1) {
     fprintf(stderr, "ERROR: IP Header's checksum is incorrect!\n");
+    return;
+  }
+
+  if (ip_header->ip_ttl <= 1){
+    printf("Packet's TTL expired!\n");
+    sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
     return;
   }
 
