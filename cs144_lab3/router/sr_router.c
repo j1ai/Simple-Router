@@ -353,6 +353,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
   printf("Sending ICMP Net Unreachable Reply Packet:===================================================\\n");
+  printf("len: %d\n", len);
   print_hdrs(packet, len);
 
   /* Send the packet */
