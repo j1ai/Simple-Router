@@ -572,6 +572,8 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
         printf("Sent Foreign IP Packet!\n");
     } else {
 	    printf("Cache missed!\n");
+      sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, interface);
+      return;
 
 	    /* Create new ethernet packet */
 	    int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
@@ -612,7 +614,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
       arp_req->sent = cur_time;
       arp_req->times_sent = 1;
       */
-      /*sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, interface); */
+      sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, interface);
   
       if (sr_send_packet(sr, arp_packet, arp_packet_len, outgoing_interface) != 0) {
         fprintf(stderr, "ERROR: Cannot send ARP Request packet\n");

@@ -176,6 +176,50 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             request->sent = cur_time;
             request->times_sent += 1;
             return;
+
+            int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
+            uint8_t *arp_packet = malloc(arp_packet_len);
+            
+            /** 
+             * For each packet->ip, it is the same as request->ip
+             * source_interface
+             * interface
+             * outgoing_interface
+             */
+
+            /* Add fields to ethernet packet */
+            struct sr_if *src_interface = sr_get_interface(sr, request->packets->iface);
+            sr_ethernet_hdr_t *arp_packet_eth_headers = (sr_ethernet_hdr_t *) arp_packet;
+            int i = 0;
+            for (i = 0; i < ETHER_ADDR_LEN; i++) {
+                arp_packet_eth_headers->ether_dhost[i] = 255;          
+            }
+            memcpy(arp_packet_eth_headers->ether_shost, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+            arp_packet_eth_headers->ether_type = htons(ethertype_arp);
+    
+            /* Set ARP header */
+            sr_arp_hdr_t *arp_packet_arp_headers = (sr_arp_hdr_t *) (arp_packet + sizeof(sr_ethernet_hdr_t));
+            arp_packet_arp_headers->ar_hrd = htons(arp_hrd_ethernet);
+            arp_packet_arp_headers->ar_pro = htons(ethertype_ip);
+            arp_packet_arp_headers->ar_hln = ETHER_ADDR_LEN;
+            arp_packet_arp_headers->ar_pln = 4;
+            arp_packet_arp_headers->ar_op  = htons(arp_op_request);
+
+            memcpy(arp_packet_arp_headers->ar_sha, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+            arp_packet_arp_headers->ar_sip = src_interface->ip;
+
+            for (i = 0; i < ETHER_ADDR_LEN; i++) {
+                arp_packet_arp_headers->ar_tha[i] = 255;
+            }
+            arp_packet_arp_headers->ar_tip = request->ip;
+
+            if (sr_send_packet(sr, arp_packet, arp_packet_len, src_interface) != 0) {
+                fprintf(stderr, "ERROR: Cannot send ARP Request packet\n");
+
+            } else {
+                printf("Sent ARP Request!!\n");
+            }
+            free(arp_packet);
         }
     }
 }
