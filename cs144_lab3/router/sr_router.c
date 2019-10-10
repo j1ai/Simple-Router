@@ -200,7 +200,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
     }
 
   } else if (arp_header->ar_op == arp_op_reply) {
-    printf("Got ARP reply packet!\n");
+    printf("Got ARP reply packet! ###########################################################\n");
 
     /**
      * If it is an incoming ARP reply packet for the router, that means that earlier in time,
