@@ -309,7 +309,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
  *---------------------------------------------------------------------*/
 void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-  printf("Received Net Unreachable IP Packet!\n");
+  printf("Received Net Unreachable IP Packet!===================================================\\n");
 
   /* Get the ethernet header */
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
@@ -351,12 +351,12 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   icmp_header->icmp_sum = 0;
   icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
-  printf("Sending ICMP Net Unreachable Reply Packet:\n");
+  printf("Sending ICMP Net Unreachable Reply Packet:===================================================\\n");
   print_hdrs(packet, len);
 
   /* Send the packet */
   sr_send_packet(sr, packet, len, interface);
-  printf("Sent ICMP Net Unreachable Reply Packet!\n");
+  printf("Sent ICMP Net Unreachable Reply Packet! ===================================================\n");
 }
 
 /*---------------------------------------------------------------------
