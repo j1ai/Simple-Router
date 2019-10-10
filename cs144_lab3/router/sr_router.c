@@ -326,7 +326,7 @@ struct sr_rt *sr_lpm(struct sr_instance *sr, uint32_t ip_dst) {
     return lpm_rt;
 }
 
-void sr_setup_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t len, uint8_t *src, uint8_t *dst)
+void sr_setup_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *src, uint8_t *dst)
 {
   memcpy(new_ethernet_header->ether_dhost, dst, ETHER_ADDR_LEN);
   memcpy(new_ethernet_header->ether_shost, src, ETHER_ADDR_LEN);
