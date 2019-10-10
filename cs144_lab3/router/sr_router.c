@@ -572,6 +572,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
         printf("Sent Foreign IP Packet!\n");
     } else {
 	    printf("Cache missed!\n");
+      
 	    /* Create new ethernet packet */
 	    int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
 	    uint8_t *arp_packet = malloc(arp_packet_len);
@@ -616,7 +617,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
         fprintf(stderr, "ERROR: Cannot send ARP Request packet\n");
 
       } else {
-        printf("Sent ARP Request !! \n");
+        printf("Sent ARP Request!!\n");
       }
       free(arp_packet);
     }

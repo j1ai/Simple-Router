@@ -89,7 +89,7 @@ struct sr_arpentry {
 };
 
 struct sr_arpreq {
-    uint32_t ip;
+    uint32_t ip;                /* Destination IP */
     time_t sent;                /* Last time this ARP request was sent. You 
                                    should update this. If the ARP request was 
                                    never sent, will be 0. */
