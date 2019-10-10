@@ -311,45 +311,45 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
 {
   printf("Received Net Unreachable IP Packet!\n");
 
-  /* Get the ethernet header */
+  /** Parts of the old packet*/
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+  sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
 
-  /* Get the IP header */
-  sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+  /** Creating a new ethernet packet */
+  int packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
+  uint8_t *new_packet = malloc(packet_len);
 
-  /* Get the ICMP header */
-  sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+  /* Set the ethernet header */
+  sr_ethernet_hdr_t *new_ethernet_header = (sr_ethernet_hdr_t *) new_packet;
+  memcpy(new_ethernet_header->ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  memcpy(new_ethernet_header->ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  new_ethernet_header->ether_type = htons(ethertype_arp);
 
-
-  /* Swap the source and destination MAC addresses */
-  uint8_t new_ether_dhost[6];
-  uint8_t new_ether_shost[6];
-  memcpy(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-  memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-  memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-  memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-
-  /* Swap the source and destination IP addresses */
-  uint32_t new_ip_src = ip_header->ip_dst;
-  uint32_t new_ip_dst = ip_header->ip_src;
-  ip_header->ip_src = new_ip_src;
-  ip_header->ip_dst = new_ip_dst;
-
-  ip_header->ip_p = 1;
-  ip_header->ip_ttl = ip_header->ip_ttl - 1;
-
-  /* Change the ICMP type and code */
-  icmp_header->icmp_code = 0;
-  icmp_header->icmp_type = 3;
+  /* Set the IP header */
+  sr_ip_hdr_t *new_ip_header = (sr_ip_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t));
+  new_ip_header->ip_v = 4;
+  new_ip_header->ip_hl = sizeof(sr_ip_hdr_t)/4;
+  new_ip_header->ip_tos = 0;
+  new_ip_header->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
+  new_ip_header->ip_id = htons(0);
+  new_ip_header->ip_off = htons(IP_DF);
+  new_ip_header->ip_ttl = 64;
+  new_ip_header->ip_dst = ip_header->ip_src;
+  new_ip_header->ip_p = ip_protocol_icmp;
+  new_ip_header->ip_src = ip_header->ip_dst;
+  new_ip_header->ip_sum = 0;
+  new_ip_header->ip_sum = cksum(new_ip_header, sizeof(sr_ip_hdr_t));
 
   /* Recompute the checksum in the IP header */
-  ip_header->ip_sum = 0;
-  ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
+  new_ip_header->ip_sum = 0;
+  new_ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
 
-  /* Recompute the checksum in the ICMP header */
-  /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
-  icmp_header->icmp_sum = 0;
-  icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+  /* Set the ICMP header */
+  sr_icmp_t3_hdr_t *new_icmp_header = (sr_icmp_t3_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+  new_icmp_header->icmp_code = 0;
+  new_icmp_header->icmp_type = 3;
+  new_icmp_header->icmp_sum = 0;
+  new_icmp_header->icmp_sum = cksum(new_icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
   printf("Sending ICMP Net Unreachable Reply Packet:\n");
   print_hdrs(packet, len);
@@ -547,10 +547,8 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
  * Returns 1 if it is the packet for the router; else return 0
  */
 int is_ip_packet_for_me(struct sr_instance *sr, uint32_t ip_dest){  
-  print_addr_ip_int(ip_dest);
   struct sr_if *temp_if_list = sr->if_list;
   while(temp_if_list){
-    print_addr_ip_int(temp_if_list->ip);
     if (temp_if_list->ip == ip_dest){
         return 1;
     }
