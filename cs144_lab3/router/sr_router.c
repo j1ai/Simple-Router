@@ -173,11 +173,6 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       /* Add fields to the ethernet packet */
       sr_ethernet_hdr_t *new_packet_eth_headers = (sr_ethernet_hdr_t *) new_packet;
       sr_setup_new_ethernet_headers(new_packet_eth_headers, router_ether_add, ethernet_header->ether_shost, ethertype_arp);
-      /**
-      memcpy(new_packet_eth_headers->ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-      memcpy(new_packet_eth_headers->ether_shost, router_ether_add, sizeof(uint8_t) * ETHER_ADDR_LEN);
-      new_packet_eth_headers->ether_type = htons(ethertype_arp);
-      */
 
       /* Set the ARP header */
       sr_arp_hdr_t *new_packet_arp_headers = (sr_arp_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
@@ -337,14 +332,11 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
 }
 
 /*---------------------------------------------------------------------
- * Method: sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
- * Scope:  Local
- *
- * This method is called when the router receives an Non-Existent route to destination IP
- * (no matching entry in routing table).
- *
+ * Method: sr_get_routing_entry_using_lpm(struct sr_instance *sr, uint32_t ip_dst)
+ * Scope: Local
+ * 
+ * This method finds the routing entry using LPM
  *---------------------------------------------------------------------*/
-/* Find the longest prefix match */
 struct sr_rt *sr_get_routing_entry_using_lpm(struct sr_instance *sr, uint32_t ip_dst) {
   struct sr_rt *routing_entry = sr->routing_table;
 
@@ -359,6 +351,14 @@ struct sr_rt *sr_get_routing_entry_using_lpm(struct sr_instance *sr, uint32_t ip
   return routing_entry;
 }
 
+/*---------------------------------------------------------------------
+ * Method: sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
+ * Scope:  Local
+ *
+ * This method is called when the router receives an Non-Existent route to destination IP
+ * (no matching entry in routing table).
+ *
+ *---------------------------------------------------------------------*/
 void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
   printf("sr_handle_net_unreachable_ip_packet()!===================================================\\n");
