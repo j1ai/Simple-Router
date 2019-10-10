@@ -579,13 +579,15 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 	    print_hdrs(arp_packet, arp_packet_len);
 
 	    /* Send ARP request */
-	    struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, interface);
+	    /**struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, interface);
       time_t cur_time;
       time (&cur_time);
       arp_req->sent = cur_time;
       arp_req->times_sent = 1;
+      */
   
       sr_send_packet(sr, arp_packet, arp_packet_len, interface);
+      free(arp_packet);
     }
   }
   /** ICMP Net Unreachable */
