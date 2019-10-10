@@ -526,7 +526,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 
   /** If there is a matched outgoing interface from routing table */
   if(routing_entry){
-    struct sr_if *outgoing_interface = sr_get_interface(sr,routing_entry->interface);
+    struct sr_if *outgoing_interface = sr_get_interface(sr, routing_entry->interface);
     struct sr_if *source_interface = sr_get_interface(sr, routing_entry2->interface);
 
     /* Swap the source MAC addresses */
