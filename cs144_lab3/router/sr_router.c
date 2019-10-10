@@ -285,6 +285,12 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     return;
   }
 
+  if (ip_header->ip_ttl == 1) {
+    printf("TTL is 1! Sending TTL time out packet!\n");
+    sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
+    return;
+  }
+
   /* Check if it is a ECHO request. If so, send a ECHO reply */
   if (icmp_header->icmp_type == 0x8) {
     printf("Received ICMP IP Echo Request Packet!\n");
@@ -514,6 +520,7 @@ void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, 
 
   printf("Sending TTL exceeded IP Packet\n");
 
+
   if (sr_send_packet(sr, new_packet, new_packet_len, interface) != 0) {
     fprintf(stderr, "ERROR: Packet sent unsuccessfully\n");
   }
@@ -570,7 +577,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
         sr_send_packet(sr, packet, len, outgoing_interface->name);
         free(arp_cache_entry);
         printf("Sent Foreign IP Packet!\n");
-        
+
     } else {
 	    printf("Cache missed!\n");
       struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name);
