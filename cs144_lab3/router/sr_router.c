@@ -335,7 +335,7 @@ void sr_setup_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *
 
 void sr_setup_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, uint32_t src, uint32_t dst)
 {
-  new_ip_header->ip_hl = 64;
+  new_ip_header->ip_hl = sizeof(sr_ip_hdr_t) / 4;
 	new_ip_header->ip_v = 4;
   new_ip_header->ip_tos = 0;
 }
