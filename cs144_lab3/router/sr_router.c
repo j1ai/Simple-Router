@@ -146,6 +146,7 @@ void sr_setup_new_icmp3_headers(sr_icmp_t3_hdr_t *new_icmp_header, sr_ip_hdr_t *
  *---------------------------------------------------------------------*/
 void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
+  printf("sr_handle_arp_packet() ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
   /** Check that the packet's length is valid */
   if (len < sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t)) {
     fprintf(stderr, "ERROR: ARP Packet does not meet min. length!\n");
