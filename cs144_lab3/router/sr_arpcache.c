@@ -97,6 +97,8 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
     time_t cur_time;
     time (&cur_time);
 
+    printf("I AM HERE\n");
+
     /** Check if the time sent before is greater than 1 second */
     if (difftime(cur_time, request->sent) > 1.0) {
 
