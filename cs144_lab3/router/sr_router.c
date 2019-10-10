@@ -602,7 +602,7 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
       sr_handle_icmp_ip_packet(sr, packet, len, interface);
 
     } else if (ip_proto == ip_protocol_tcp || ip_proto == ip_protocol_udp) {
-      printf("protocol is TCP/UDP!\n");
+      printf("Protocol is TCP/UDP!\n");
       sr_handle_port_unreachable_ip_packet(sr, packet, len, interface);
     }
 
