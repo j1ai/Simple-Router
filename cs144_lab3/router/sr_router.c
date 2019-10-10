@@ -397,9 +397,11 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   sr_setup_new_icmp3_headers(new_icmp_header, ip_header);
 
   /** Send the packet */
-  sr_send_packet(sr, new_packet, new_packet_len, interface);
+  printf("Sending ICMP Net Unreachable Reply Packet!\n");
+  if (sr_send_packet(sr, new_packet, new_packet_len, interface) != 0) {
+    fprintf(stderr, "ERROR: Packet sent unsuccessfully\n");
+  }
   free(new_packet);
-  printf("Sent ICMP Net Unreachable Reply Packet!\n");
 }
 
 /*---------------------------------------------------------------------
