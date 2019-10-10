@@ -337,11 +337,11 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
  * 
  * This method finds the routing entry using LPM
  *---------------------------------------------------------------------*/
-struct sr_rt *sr_get_routing_entry_using_lpm(struct sr_instance *sr, uint32_t ip_dst) {
+struct sr_rt *sr_get_routing_entry_using_lpm(struct sr_instance *sr, uint32_t ip) {
   struct sr_rt *routing_entry = sr->routing_table;
 
   while (routing_entry){
-    uint32_t cur_route = ip_dst & routing_entry->mask.s_addr;
+    uint32_t cur_route = ip & routing_entry->mask.s_addr;
     if (cur_route == routing_entry->dest.s_addr){
       break;
     }
@@ -521,33 +521,13 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
     return;
   }
 
-  struct sr_rt *routing_entry = sr->routing_table;
-  struct sr_if *outgoing_interface = NULL;
-
-  while(routing_entry){
-    uint32_t cur_route = ip_header->ip_dst & routing_entry->mask.s_addr;
-    if (cur_route == routing_entry->dest.s_addr){
-        outgoing_interface = sr_get_interface(sr,routing_entry->interface);
-        break;
-    }
-    routing_entry = routing_entry->next;
-  }
-
-  struct sr_rt *routing_entry2 = sr->routing_table;
-  struct sr_if *source_interface = NULL;
-
-  while(routing_entry2){
-      uint32_t cur_route = ip_header->ip_src & routing_entry2->mask.s_addr;
-      if (cur_route == routing_entry2->dest.s_addr){
-          source_interface = sr_get_interface(sr,routing_entry2->interface);
-    break;
-      }
-      routing_entry2 = routing_entry2->next;
-  }
-
+  struct sr_rt *routing_entry = sr_get_routing_entry_using_lpm(sr, ip_header->ip_dst);
+  struct sr_rt *routing_entry2 = sr_get_routing_entry_using_lpm(sr, ip_header->ip_src);
 
   /** If there is a matched outgoing interface from routing table */
-  if(outgoing_interface){
+  if(routing_entry){
+    struct sr_if *outgoing_interface = sr_get_interface(sr,routing_entry->interface);
+    struct sr_if *source_interface = sr_get_interface(sr, routing_entry2->interface);
 
     /* Swap the source MAC addresses */
     memcpy(ethernet_header->ether_shost, outgoing_interface->addr, ETHER_ADDR_LEN);
