@@ -578,7 +578,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
   }
   /** ICMP Net Unreachable */
   else{
-    sr_handle_net_unreachable_ip_packet(sr,packet,len,interface);
+    sr_handle_net_unreachable_ip_packet(sr, packet, len, interface);
   }
 }
 
