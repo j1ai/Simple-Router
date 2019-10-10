@@ -574,57 +574,6 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 	    printf("Cache missed!\n");
       struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name);
       handle_arpreq(sr, arp_req);
-
-      return;
-
-	    /* Create new ethernet packet */
-	    int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
-	    uint8_t *arp_packet = malloc(arp_packet_len);
-
-	    /* Add fields to ethernet packet */
-	    struct sr_if *src_interface = sr_get_interface(sr, interface);
-	    sr_ethernet_hdr_t *arp_packet_eth_headers = (sr_ethernet_hdr_t *) arp_packet;
-      int i = 0;
-      for (i = 0; i < ETHER_ADDR_LEN; i++) {
-        arp_packet_eth_headers->ether_dhost[i] = 255;          
-      }
-	    memcpy(arp_packet_eth_headers->ether_shost, outgoing_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    arp_packet_eth_headers->ether_type = htons(ethertype_arp);
- 
-	    /* Set ARP header */
-	    sr_arp_hdr_t *arp_packet_arp_headers = (sr_arp_hdr_t *) (arp_packet + sizeof(sr_ethernet_hdr_t));
-	    arp_packet_arp_headers->ar_hrd = htons(arp_hrd_ethernet);
-	    arp_packet_arp_headers->ar_pro = htons(ethertype_ip);
-	    arp_packet_arp_headers->ar_hln = ETHER_ADDR_LEN;
-	    arp_packet_arp_headers->ar_pln = 4;
-	    arp_packet_arp_headers->ar_op  = htons(arp_op_request);
-
-	    memcpy(arp_packet_arp_headers->ar_sha, source_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    arp_packet_arp_headers->ar_sip = ip_header->ip_src;
-      for (i = 0; i < ETHER_ADDR_LEN; i++) {
-        arp_packet_arp_headers->ar_tha[i] = 255;
-      }
-	    arp_packet_arp_headers->ar_tip = ip_header->ip_dst;	    
-
-	    printf("ARP Packet below!! \n");
-	    print_hdrs(arp_packet, arp_packet_len);
-
-	    /* Send ARP request */
-	    /**struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, interface);
-      time_t cur_time;
-      time (&cur_time);
-      arp_req->sent = cur_time;
-      arp_req->times_sent = 1;
-      */
-      sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, interface);
-  
-      if (sr_send_packet(sr, arp_packet, arp_packet_len, outgoing_interface) != 0) {
-        fprintf(stderr, "ERROR: Cannot send ARP Request packet\n");
-
-      } else {
-        printf("Sent ARP Request!!\n");
-      }
-      free(arp_packet);
     }
   }
   /** ICMP Net Unreachable */

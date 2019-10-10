@@ -168,23 +168,12 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
 
         } else {
 	        printf("Sent arp request %d!\n", request->times_sent + 1);
-            /**
-             * Send ARP request to the request's IP
-             * Update req->sent = now
-             * Update req->times_sent += 1
-             */
+            
             request->sent = cur_time;
             request->times_sent += 1;
 
             int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
             uint8_t *arp_packet = malloc(arp_packet_len);
-            
-            /** 
-             * For each packet->ip, it is the same as request->ip
-             * source_interface
-             * interface
-             * outgoing_interface
-             */
 
             /* Add fields to ethernet packet */
             struct sr_if *src_interface = sr_get_interface(sr, request->packets->iface);
