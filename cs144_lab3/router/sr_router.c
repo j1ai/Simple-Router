@@ -309,21 +309,34 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
  *---------------------------------------------------------------------*/
 /* Find the longest prefix match */
 struct sr_rt *sr_lpm(struct sr_instance *sr, uint32_t ip_dst) {
-    /* sr_rt is a linkedList until reaching the end */
+  /**
     struct sr_rt *routing_table = sr->routing_table;
     uint32_t len = 0;
-    struct sr_rt *lpm_rt = NULL; /*sr->routing_table;*/
+    struct sr_rt *lpm_rt = NULL;
 
     while (routing_table) {
         if ((ip_dst & routing_table->mask.s_addr) == (routing_table->dest.s_addr & routing_table->mask.s_addr)) {
-            if (len < routing_table->mask.s_addr) { /* routing_table->dest.s_addr & routing_table->mask.s_addr) { */
-                len = routing_table->mask.s_addr; /*& routing_table->mask.s_addr;*/
+            if (len < routing_table->mask.s_addr) {
+                len = routing_table->mask.s_addr;
                 lpm_rt = routing_table;
             }
         }
         routing_table = routing_table->next;
     }
     return lpm_rt;
+    */
+
+  struct sr_rt *routing_entry = sr->routing_table;
+
+  while (routing_entry){
+    uint32_t cur_route = ip_dst & routing_entry->mask.s_addr;
+    if (cur_route == routing_entry->dest.s_addr){
+      break;
+    }
+    routing_entry = routing_entry->next;
+  }
+  
+  return routing_entry;
 }
 
 void sr_setup_new_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *src, uint8_t *dst)
