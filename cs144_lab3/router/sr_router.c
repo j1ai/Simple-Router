@@ -567,11 +567,10 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 	    arp_packet_arp_headers->ar_pln = sizeof(ethertype_ip);
 	    arp_packet_arp_headers->ar_op  = htons(arp_op_request);
 
-	   		
 	    memcpy(arp_packet_arp_headers->ar_sha, source_interface->addr/*src_interface->addr*/, sizeof(uint8_t) * ETHER_ADDR_LEN);
 	    arp_packet_arp_headers->ar_sip = ip_header->ip_src;/*src_interface->ip;*/
 	
-            uint8_t broadcast_mac_addr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+      uint8_t broadcast_mac_addr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 	    memcpy(arp_packet_arp_headers->ar_tha, broadcast_mac_addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
 	    arp_packet_arp_headers->ar_tip = ip_header->ip_dst;	    
 
