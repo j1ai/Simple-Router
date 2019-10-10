@@ -343,6 +343,13 @@ void sr_setup_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, enum sr_ip_pro
   new_ip_header->ip_off = htons(IP_DF);
   new_ip_header->ip_ttl = htons(64);
   new_ip_header->ip_p = protocol;
+  new_ip_header->ip_sum = 0;
+	new_ip_header->ip_sum = cksum(new_ip_header, sizeof(sr_ip_hdr_t));
+}
+
+void sr_setup_icmp3_headers(sr_icmp_t3_hdr_t *new_icmp_header)
+{
+
 }
 
 void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
@@ -376,16 +383,12 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   sr_icmp_t3_hdr_t *new_icmp_header = (sr_icmp_t3_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
   sr_setup_ethernet_headers(new_ethernet_header, out_iface->addr, ethernet_header->ether_shost);
-
   sr_setup_ip_headers(new_ip_header, ip_header->ip_hl, ip_protocol_icmp, out_iface->ip, ip_header->ip_src);
+  sr_setup_icmp3_headers(new_icmp_header);
 
   /* source and destination should be altered */
-  new_ip_header->ip_src = out_iface->ip;/* ip_hdr->ip_dst;  */      /* source address */
-  new_ip_header->ip_dst = ip_header->ip_src;        /* dest address */
-  new_ip_header->ip_sum = 0;
-	new_ip_header->ip_sum = cksum(new_ip_header, sizeof(sr_ip_hdr_t));
 
-  new_icmp_header->icmp_type = 3;
+  new_icmp_header->icmp_type = htons(3);
   new_icmp_header->icmp_code = 0;
   new_icmp_header->unused = 0;
   new_icmp_header->next_mtu = 0;
