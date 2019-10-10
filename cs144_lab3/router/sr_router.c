@@ -326,14 +326,14 @@ struct sr_rt *sr_lpm(struct sr_instance *sr, uint32_t ip_dst) {
     return lpm_rt;
 }
 
-void sr_setup_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *src, uint8_t *dst)
+void sr_setup_new_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *src, uint8_t *dst)
 {
   memcpy(new_ethernet_header->ether_dhost, dst, ETHER_ADDR_LEN);
   memcpy(new_ethernet_header->ether_shost, src, ETHER_ADDR_LEN);
   new_ethernet_header->ether_type = htons(ethertype_ip);
 }
 
-void sr_setup_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, enum sr_ip_protocol protocol, uint32_t src, uint32_t dst)
+void sr_setup_new_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, enum sr_ip_protocol protocol, uint32_t src, uint32_t dst)
 {
   new_ip_header->ip_hl = sizeof(sr_ip_hdr_t) / 4;
 	new_ip_header->ip_v = 4;
@@ -349,7 +349,7 @@ void sr_setup_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, enum sr_ip_pro
 	new_ip_header->ip_sum = cksum(new_ip_header, sizeof(sr_ip_hdr_t));
 }
 
-void sr_setup_icmp3_headers(sr_icmp_t3_hdr_t *new_icmp_header, sr_ip_hdr_t *ip_header)
+void sr_setup_new_icmp3_headers(sr_icmp_t3_hdr_t *new_icmp_header, sr_ip_hdr_t *ip_header)
 {
   new_icmp_header->icmp_type = 3;
   new_icmp_header->icmp_code = 0;
@@ -391,9 +391,9 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   sr_icmp_t3_hdr_t *new_icmp_header = (sr_icmp_t3_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
   /** Set up the headers */
-  sr_setup_ethernet_headers(new_ethernet_header, out_iface->addr, ethernet_header->ether_shost);
-  sr_setup_ip_headers(new_ip_header, ip_header->ip_hl, ip_protocol_icmp, out_iface->ip, ip_header->ip_src);
-  sr_setup_icmp3_headers(new_icmp_header, ip_header);
+  sr_setup_new_ethernet_headers(new_ethernet_header, out_iface->addr, ethernet_header->ether_shost);
+  sr_setup_new_ip_headers(new_ip_header, ip_header->ip_hl, ip_protocol_icmp, out_iface->ip, ip_header->ip_src);
+  sr_setup_new_icmp3_headers(new_icmp_header, ip_header);
 
   /** Send the packet */
   sr_send_packet(sr, new_packet, new_packet_len, out_iface->name);
