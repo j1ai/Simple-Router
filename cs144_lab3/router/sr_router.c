@@ -172,8 +172,8 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 
       /* Add fields to the ethernet packet */
       sr_ethernet_hdr_t *new_packet_eth_headers = (sr_ethernet_hdr_t *) new_packet;
-      sr_setup_new_ethernet_headers(new_packet_eth_headers, ethernet_header->ether_shost, router_ether_add, ethertype_arp);
-
+      sr_setup_new_ethernet_headers(new_packet_eth_headers, router_ether_add, ethernet_header->ether_shost, ethertype_arp);
+      
       /* Set the ARP header */
       sr_arp_hdr_t *new_packet_arp_headers = (sr_arp_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
       new_packet_arp_headers->ar_hrd = arp_header->ar_hrd;
