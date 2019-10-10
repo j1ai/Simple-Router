@@ -552,8 +552,9 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 	    unsigned int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
 	    uint8_t *arp_packet = malloc(arp_packet_len);
 
-	    /* Add fields to ethernet packet */
 	    struct sr_if *src_interface = sr_get_interface(sr, interface);
+
+	    /* Add fields to ethernet packet */
 	    sr_ethernet_hdr_t *arp_packet_eth_headers = (sr_ethernet_hdr_t *) arp_packet;
       uint8_t ether_dhost_val[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 	    memcpy(arp_packet_eth_headers->ether_dhost, ether_dhost_val /** outgoing_interface->addr*/, sizeof(uint8_t) * ETHER_ADDR_LEN);
@@ -580,7 +581,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 	    print_hdrs(arp_packet, arp_packet_len);
 
 	    /* Send ARP request */
-	    struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet /** arp_packet */, len /** arp_packet_len */, source_interface->name);
+	    struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, source_interface->name);
       handle_arpreq(arp_req);
       /**sr_send_packet(sr, arp_packet, arp_packet_len, interface);*/
       /**free(arp_packet);*/

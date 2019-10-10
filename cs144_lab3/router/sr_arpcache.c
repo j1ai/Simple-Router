@@ -168,14 +168,16 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
 
         } else {
 	        printf("Sent arp request %d!\n", request->times_sent + 1);
+            request->sent = cur_time;
+            request->times_sent += 1;
+
+            struct sr_if *target_iface = sr_get_interface(sr, request->packets->iface);
             
             /**
              * Send ARP request to the request's IP
              * Update req->sent = now
              * Update req->times_sent += 1
              */
-            request->sent = cur_time;
-            request->times_sent += 1;
             
             /** The interface used to send out the request */
             char *out_iface = request->packets->iface;
@@ -185,19 +187,29 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             print_addr_ip_int(sr_get_interface(sr, out_iface)->ip);
 
             /* Create new ethernet packet */
-            unsigned int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
-            uint8_t *arp_packet = malloc(arp_packet_len);
+            unsigned int new_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
+            uint8_t *new_packet = malloc(new_packet_len);
 
-            /* Add fields to ethernet packet */
-            struct sr_if *src_interface = sr_get_interface(sr, out_iface);
-            sr_ethernet_hdr_t *arp_packet_eth_headers = (sr_ethernet_hdr_t *) arp_packet;
-            uint8_t ether_dhost_val[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-            memcpy(arp_packet_eth_headers->ether_dhost, ether_dhost_val, sizeof(uint8_t) * ETHER_ADDR_LEN);
-            memcpy(arp_packet_eth_headers->ether_shost, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-            arp_packet_eth_headers->ether_type = htons(ethertype_arp);
-    
+            /** Set the ethernet headers */
+            sr_ethernet_hdr_t *new_ethernet_headers = (sr_ethernet_hdr_t *) new_packet;
+            memcpy(new_ethernet_headers->ether_dhost, 255, sizeof(uint8_t) * ETHER_ADDR_LEN);
+            memcpy(new_ethernet_headers->ether_shost, target_iface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+            new_ethernet_headers->ether_type = htons(ethertype_arp);
+
+            /** Set the ARP headers */
+            sr_arp_hdr_t *new_arp_headers = (sr_arp_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
+            new_arp_headers->ar_hrd = htons(arp_hrd_ethernet);
+            new_arp_headers->ar_pro = htons(ethertype_ip);
+            new_arp_headers->ar_hln = ETHER_ADDR_LEN;
+            new_arp_headers->ar_pln = sizeof(uint32_t);
+            new_arp_headers->ar_op = htons(arp_op_request);
+            memcpy(new_arp_headers->ar_sha, target_iface->addr, sizeof(unsigned char)*ETHER_ADDR_LEN);
+            new_arp_headers->ar_sip = target_iface->ip;
+            memset(new_arp_headers->ar_tha, 255, sizeof(unsigned char)*ETHER_ADDR_LEN);
+            new_arp_headers->ar_tip = request->ip;
+
             /* Set ARP header */
-            sr_arp_hdr_t *arp_packet_arp_headers = (sr_arp_hdr_t *) (arp_packet + sizeof(sr_ethernet_hdr_t));
+            /**
             arp_packet_arp_headers->ar_hrd = htons(arp_hrd_ethernet);
             arp_packet_arp_headers->ar_pro = htons(ethertype_ip);
             arp_packet_arp_headers->ar_hln = ETHER_ADDR_LEN;
@@ -207,27 +219,32 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             memcpy(arp_packet_arp_headers->ar_sha, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
             arp_packet_arp_headers->ar_sip = sr_get_interface(sr, out_iface)->ip;
         
-            /** uint8_t broadcast_mac_addr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}; */
             uint8_t broadcast_mac_addr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
             memcpy(arp_packet_arp_headers->ar_tha, broadcast_mac_addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
             arp_packet_arp_headers->ar_tip = request->ip;	    
 
             printf("ARP Packet below being sent!==============!! \n");
             print_hdrs(arp_packet, arp_packet_len);
+            */
 
-            sr_send_packet(sr, arp_packet, arp_packet_len, request->packets->iface);
-            free(arp_packet);
+            print_hdrs(new_packet, new_packet_len);
+            sr_send_packet(sr, new_packet, new_packet_len, request->packets->iface);
+            free(new_packet);
 
             return;
 
             /** Create new ARP request packet */
+            /*
             struct sr_packet *curr_packet = request->packets;
             struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), request->ip,
                         curr_packet->buf, curr_packet->len, curr_packet->iface);
             struct sr_packet *new_packet = arp_req->packets;
+            */
 
             /** Send an ARP request to the request's IP */
+            /*
             sr_send_packet(sr, new_packet->buf, new_packet->len, new_packet->iface);
+            */
         }
     }
 }
