@@ -175,7 +175,6 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
              */
             request->sent = cur_time;
             request->times_sent += 1;
-            return;
 
             int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
             uint8_t *arp_packet = malloc(arp_packet_len);
