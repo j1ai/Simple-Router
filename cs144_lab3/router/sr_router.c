@@ -573,6 +573,9 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
     } else {
 	    printf("Cache missed!\n");
       struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, interface);
+      if (arp_req == NULL) {
+        fprintf(stderr, "ERROR!\n");
+      }
       sr_arpcache_sweepreqs(arp_req);
       return;
 
