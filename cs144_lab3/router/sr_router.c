@@ -310,6 +310,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
 void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
   printf("sr_handle_net_unreachable_ip_packet()!===================================================\\n");
+  printf("len: %d\n", len);
   print_hdrs(packet, len);
 
   /* Get the ethernet header */
