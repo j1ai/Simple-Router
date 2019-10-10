@@ -326,6 +326,18 @@ struct sr_rt *sr_lpm(struct sr_instance *sr, uint32_t ip_dst) {
     return lpm_rt;
 }
 
+void sr_setup_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t len, uint8_t *src, uint8_t *dst)
+{
+  memcpy(new_ethernet_header->ether_dhost, dst, ETHER_ADDR_LEN);
+  memcpy(new_ethernet_header->ether_shost, src, ETHER_ADDR_LEN);
+  new_ethernet_header->ether_type = htons(ethertype_ip);
+}
+
+void sr_setup_ip_headers(sr_ip_hdr_t *new_ip_header, uint32_t src, uint32_t dst)
+{
+  
+}
+
 void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
   printf("sr_handle_net_unreachable_ip_packet()!===================================================\\n");
@@ -356,13 +368,11 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   sr_ip_hdr_t *new_ip_header = (sr_ip_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t));
   sr_icmp_t3_hdr_t *new_icmp_header = (sr_icmp_t3_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
-  memcpy(new_ethernet_header->ether_dhost, ethernet_header->ether_shost, ETHER_ADDR_LEN);
-  memcpy(new_ethernet_header->ether_shost, out_iface->addr, ETHER_ADDR_LEN);
-  new_ethernet_header->ether_type = htons(ethertype_ip);
+  sr_setup_ethernet_headers(new_ethernet_header, out_iface->addr, ethernet_header->ether_shost);
 
   new_ip_header->ip_hl = ip_header->ip_hl;			/* header length */
 	new_ip_header->ip_v = ip_header->ip_v; 			/* header version */
-  new_ip_header->ip_tos = ip_header->ip_tos;        /* type of service */
+  new_ip_header->ip_tos = 0;        /* type of service */
   new_ip_header->ip_len = htons(56); /* ip_hdr->ip_len;         total length */
   new_ip_header->ip_id = 0; /*ip_hdr->ip_id;*/          /* identification */
   new_ip_header->ip_off = htons(0b0100000000000000);        /* fragment offset field */
