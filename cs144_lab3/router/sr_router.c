@@ -88,7 +88,7 @@ int verify_icmp_packet_checksum(sr_icmp_hdr_t *icmp_header, int len) {
   return 0;
 }
 
-void sr_setup_new_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *src, uint8_t *dst, uint16_t ether_type)
+void sr_setup_new_ethernet_headers(sr_ethernet_hdr_t *new_ethernet_header, uint8_t *src, uint8_t *dst, enum sr_ethertype ether_type)
 {
   memcpy(new_ethernet_header->ether_dhost, dst, ETHER_ADDR_LEN);
   memcpy(new_ethernet_header->ether_shost, src, ETHER_ADDR_LEN);
