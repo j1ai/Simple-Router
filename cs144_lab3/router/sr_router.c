@@ -612,7 +612,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
       arp_req->times_sent = 1;
       */
   
-      if (sr_send_packet(sr, arp_packet, arp_packet_len, interface) != 0) {
+      if (sr_send_packet(sr, arp_packet, arp_packet_len, outgoing_interface) != 0) {
         fprintf(stderr, "ERROR: Cannot send ARP Request packet\n");
 
       } else {
