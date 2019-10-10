@@ -45,15 +45,9 @@ void sr_init(struct sr_instance *sr)
   pthread_attr_setscope(&(sr->attr), PTHREAD_SCOPE_SYSTEM);
   pthread_t thread;
 
-<<<<<<< HEAD
   pthread_create(&thread, &(sr->attr), sr_arpcache_timeout, sr);
-  
-  /* Add initialization code here! */
-=======
-    pthread_create(&thread, &(sr->attr), sr_arpcache_timeout, sr);
 
-    /* Add initialization code here! */
->>>>>>> 4093537a72840be1020b9bd4deb5b0ab2e441311
+  /* Add initialization code here! */
 
 } /* -- sr_init -- */
 
