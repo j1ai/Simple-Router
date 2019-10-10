@@ -452,8 +452,8 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
   ip_header->ip_ttl = ip_header->ip_ttl - 1;
 
   /* Change the ICMP type and code */
-  icmp_header->icmp_code = 1;
-  icmp_header->icmp_type = 3;
+  icmp_header->icmp_code = htons(1);
+  icmp_header->icmp_type = htons(3);
 
   /* Recompute the checksum in the IP header */
   ip_header->ip_sum = 0;
