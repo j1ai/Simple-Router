@@ -200,7 +200,7 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
       free(new_packet);
     }
 
-  } else if (ntohs(arp_header->ar_op == arp_op_reply)) {
+  } else if (ntohs(arp_header->ar_op) == arp_op_reply) {
     printf("Got ARP reply packet! &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n");
 
     /**
@@ -586,7 +586,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
  
 	    /* Set ARP header */
 	    sr_arp_hdr_t *arp_packet_arp_headers = (sr_arp_hdr_t *) (arp_packet + sizeof(sr_ethernet_hdr_t));
-	    arp_packet_arp_headers->ar_hrd = 1;
+	    arp_packet_arp_headers->ar_hrd = htons(arp_hrd_ethernet);
 	    arp_packet_arp_headers->ar_pro = htons(ethertype_ip);
 	    arp_packet_arp_headers->ar_hln = ETHER_ADDR_LEN;
 	    arp_packet_arp_headers->ar_pln = 4;
