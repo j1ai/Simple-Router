@@ -480,7 +480,7 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
 
   /* Send the packet */
   sr_send_packet(sr, packet, len, interface);
-  printf("Sent ICMP Host Unreachable Reply Packet!\n");
+  printf("Sent Host Unreachable Reply Packet!\n");
 }
 
 /*---------------------------------------------------------------------
