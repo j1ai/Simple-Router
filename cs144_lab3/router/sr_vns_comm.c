@@ -527,6 +527,8 @@ sr_ether_addrs_match_interface( struct sr_instance* sr, /* borrowed */
     assert(buf);
     assert(name);
 
+    printf("name: %s\n", name);
+
     ether_hdr = (struct sr_ethernet_hdr*)buf;
     iface = sr_get_interface(sr, name);
 
