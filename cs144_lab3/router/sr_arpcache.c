@@ -92,6 +92,49 @@
  *    - We just ignore it
  *
  */
+void send_arp_req_packet_broadcast(struct sr_instance *sr, char * out_iface, uint32_t dest_ip) {
+    assert(sr);
+    assert(out_iface);
+    assert(dest_ip);
+    /* Get the interface from the router */
+	/*fprintf(stderr, "********* send arp request ***********\n");*/
+    struct sr_if *out_if = sr_get_interface(sr, out_iface);
+    int packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
+    uint8_t *arp_req_hdr = (uint8_t *)malloc(packet_len);
+    /* Create ethernet header */
+    sr_ethernet_hdr_t *eth_hdr = (sr_ethernet_hdr_t *)arp_req_hdr;
+    memcpy(eth_hdr->ether_shost, out_if->addr, ETHER_ADDR_LEN);     /* destination ethernet address */
+	int i;
+    for (i = 0; i < ETHER_ADDR_LEN; ++i) {                      /* source ethernet address */
+        eth_hdr->ether_dhost[i] = 255;          
+    }
+    eth_hdr->ether_type = htons(ethertype_arp);             /* packet type ID */
+
+    /* Create arp header */
+    sr_arp_hdr_t *arp_hdr = (sr_arp_hdr_t *)((char *)arp_req_hdr + sizeof(sr_ethernet_hdr_t));
+    arp_hdr->ar_hrd = htons(arp_hrd_ethernet);      /* format of hardware address   */
+    arp_hdr->ar_pro = htons(ethertype_ip);         /* format of protocol address   */
+    arp_hdr->ar_hln = ETHER_ADDR_LEN;               /* length of hardware address   */
+    arp_hdr->ar_pln = 4;                     		/* length of protocol address   */
+    arp_hdr->ar_op = htons(arp_op_request);         /* ARP opcode (command)         */
+    /* sender hardware address      */
+    memcpy(arp_hdr->ar_sha, out_if->addr, ETHER_ADDR_LEN);
+    /* sender IP address            */
+    arp_hdr->ar_sip = out_if->ip;
+    /* target hardware address      */
+    for (i = 0; i < ETHER_ADDR_LEN; ++i) {
+        arp_hdr->ar_tha[i] = 255;
+    }
+    /* target IP address            */
+    arp_hdr->ar_tip = dest_ip;
+    
+    /* Send arp request packet */
+    sr_send_packet(sr, arp_req_hdr, packet_len, out_if->name);
+	/*printf("************ send arp packet *************\n");*/
+    free(arp_req_hdr);
+    return;
+}
+
 void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
     /** Get the current system time */
     time_t cur_time;
@@ -174,15 +217,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
              */
             request->sent = cur_time;
             request->times_sent += 1;
-
-            /** Create new ARP request packet */
-            struct sr_packet *curr_packet = request->packets;
-            struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), request->ip,
-                        curr_packet->buf, curr_packet->len, curr_packet->iface);
-            struct sr_packet *new_packet = arp_req->packets;
-
-            /** Send an ARP request to the request's IP */
-            sr_send_packet(sr, new_packet->buf, new_packet->len, new_packet->iface);
+            send_arp_req_packet_broadcast(sr, (request->packets)->iface, request->ip);
         }
     }
 }
