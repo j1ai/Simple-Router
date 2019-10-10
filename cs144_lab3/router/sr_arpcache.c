@@ -179,6 +179,8 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             /** The interface used to send out the request */
             char *out_iface = request->packets->iface;
 
+            printf("out_iface: %s\n", out_iface);
+
             /* Create new ethernet packet */
             unsigned int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
             uint8_t *arp_packet = malloc(arp_packet_len);
