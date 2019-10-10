@@ -308,24 +308,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
  *
  *---------------------------------------------------------------------*/
 /* Find the longest prefix match */
-struct sr_rt *sr_lpm(struct sr_instance *sr, uint32_t ip_dst) {
-  /**
-    struct sr_rt *routing_table = sr->routing_table;
-    uint32_t len = 0;
-    struct sr_rt *lpm_rt = NULL;
-
-    while (routing_table) {
-        if ((ip_dst & routing_table->mask.s_addr) == (routing_table->dest.s_addr & routing_table->mask.s_addr)) {
-            if (len < routing_table->mask.s_addr) {
-                len = routing_table->mask.s_addr;
-                lpm_rt = routing_table;
-            }
-        }
-        routing_table = routing_table->next;
-    }
-    return lpm_rt;
-    */
-
+struct sr_rt *sr_get_routing_entry_using_lpm(struct sr_instance *sr, uint32_t ip_dst) {
   struct sr_rt *routing_entry = sr->routing_table;
 
   while (routing_entry){
@@ -335,7 +318,7 @@ struct sr_rt *sr_lpm(struct sr_instance *sr, uint32_t ip_dst) {
     }
     routing_entry = routing_entry->next;
   }
-  
+
   return routing_entry;
 }
 
@@ -385,10 +368,10 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
   /** We need to look for which interface to send out the packet to the client */
-  struct sr_rt *longest_pref_match = sr_lpm(sr, ip_header->ip_src);
+  struct sr_rt *longest_pref_match = sr_get_routing_entry_using_lpm(sr, ip_header->ip_src);
 
   if (longest_pref_match == NULL) {
-    printf("Found no RT entry for the source!\n");
+    printf("Cannot find interface to the client!\n");
     return;
   }
 
@@ -399,6 +382,8 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   /** Make a new packet */
   int new_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
   uint8_t *new_packet = malloc(new_packet_len);
+
+  /** Get the headers for the packet */
   sr_ethernet_hdr_t *new_ethernet_header = (sr_ethernet_hdr_t *) new_packet;
   sr_ip_hdr_t *new_ip_header = (sr_ip_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t));
   sr_icmp_t3_hdr_t *new_icmp_header = (sr_icmp_t3_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
