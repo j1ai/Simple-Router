@@ -393,7 +393,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
 
   /** Set up the headers */
   sr_setup_new_ethernet_headers(new_ethernet_header, out_iface->addr, ethernet_header->ether_shost, ethertype_ip);
-  sr_setup_new_ip_headers(new_ip_header, ip_header->ip_hl, sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t), ip_protocol_icmp, out_iface->ip, ip_header->ip_src);
+  sr_setup_new_ip_headers(new_ip_header, sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t), ip_protocol_icmp, out_iface->ip, ip_header->ip_src);
   sr_setup_new_icmp3_headers(new_icmp_header, ip_header);
 
   /** Send the packet */
