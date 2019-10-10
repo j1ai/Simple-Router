@@ -177,8 +177,10 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
              */
             
             /** The interface used to send out the request */
+            if (request->packets == NULL) {
+                printf("I AM HERE\n");
+            }
             char *out_iface = request->packets->iface;
-            printf("I AM HERE\n");
             struct sr_if *target_iface = sr_get_interface(sr, request->packets->iface);
 
             printf("out_iface: %s\n", out_iface);
