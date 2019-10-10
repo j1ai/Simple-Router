@@ -371,7 +371,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
   sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
-  /** Search for the rt entry for the source*/
+  /** We need to look for which interface to send out the packet to the client */
   struct sr_rt *longest_pref_match = sr_lpm(sr, ip_header->ip_src);
 
   if (longest_pref_match == NULL) {
@@ -379,7 +379,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
     return;
   }
 
-  /** Get stuff from the ARP cache */
+  /** We need to send out the packet back to the client, so we look it up in the ARP cache */
   struct sr_arpentry *arp_entry = sr_arpcache_lookup(&sr->cache, longest_pref_match->gw.s_addr);
   struct sr_if *out_iface = sr_get_interface(sr, longest_pref_match->interface);
 
@@ -390,68 +390,15 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   sr_ip_hdr_t *new_ip_header = (sr_ip_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t));
   sr_icmp_t3_hdr_t *new_icmp_header = (sr_icmp_t3_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
+  /** Set up the headers */
   sr_setup_ethernet_headers(new_ethernet_header, out_iface->addr, ethernet_header->ether_shost);
   sr_setup_ip_headers(new_ip_header, ip_header->ip_hl, ip_protocol_icmp, out_iface->ip, ip_header->ip_src);
   sr_setup_icmp3_headers(new_icmp_header, ip_header);
 
-  printf("Sending ICMP Net Unreachable Reply Packet:===================================================\\n");
-  printf("len: %d\n", new_packet_len);
-  print_hdrs(new_packet, new_packet_len);
-
-  /* Send the packet */
+  /** Send the packet */
   sr_send_packet(sr, new_packet, new_packet_len, out_iface->name);
-  printf("Sent ICMP Net Unreachable Reply Packet! ===================================================\n");
   free(new_packet);
-  return;
-
-  /* Swap the source and destination MAC addresses
-  uint8_t new_ether_dhost[6];
-  uint8_t new_ether_shost[6];
-  memcpy(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-  memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-  memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-  memcpy(ethernet_header->ether_shost, out_iface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-  */
-
-  /* Swap the source and destination IP addresses
-  uint32_t new_ip_src = ip_header->ip_dst;
-  uint32_t new_ip_dst = ip_header->ip_src;
-  ip_header->ip_src = out_iface->ip;
-  ip_header->ip_dst = new_ip_dst;
-
-  ip_header->ip_p = ip_protocol_icmp;
-  ip_header->ip_ttl = 64;
-  */
-
-  /* Recompute the checksum in the IP header
-  ip_header->ip_sum = 0;
-  ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
-  */
-
-  /* Recompute the checksum in the ICMP header */
-  /* Note that the ICMP checksum only uses the ICMP header values not the packet data
-  icmp_header->icmp_code = 0;
-  icmp_header->icmp_type = 3;
-  icmp_header->unused = 0;
-  icmp_header->next_mtu = 0;
-  */
-
-  /** Note that for icmp-type-3 headers, the data needs to be the first 64 bits of the original packet
-  memcpy(icmp_header->data, ip_hdr, ICMP_DATA_SIZE); 
-  */
-
-  /** Compute the checksum of the icmp header
-  icmp_header->icmp_sum = 0;
-  icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
-  */
-
-  printf("Sending ICMP Net Unreachable Reply Packet:===================================================\\n");
-  printf("len: %d\n", len);
-  print_hdrs(packet, len);
-
-  /* Send the packet */
-  sr_send_packet(sr, packet, len, interface);
-  printf("Sent ICMP Net Unreachable Reply Packet! ===================================================\n");
+  printf("Sent ICMP Net Unreachable Reply Packet!\n");
 }
 
 /*---------------------------------------------------------------------
