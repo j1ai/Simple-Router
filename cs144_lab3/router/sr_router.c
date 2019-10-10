@@ -309,7 +309,8 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
  *---------------------------------------------------------------------*/
 void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-  printf("Received Net Unreachable IP Packet!===================================================\\n");
+  printf("sr_handle_net_unreachable_ip_packet()!===================================================\\n");
+  print_hdrs(packet, len);
 
   /* Get the ethernet header */
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
@@ -319,7 +320,6 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
 
   /* Get the ICMP header */
   sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
-
 
   /* Swap the source and destination MAC addresses */
   uint8_t new_ether_dhost[6];
