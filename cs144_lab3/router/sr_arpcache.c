@@ -102,7 +102,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
 
         /** Check if the number of times sent is greater than 5*/
         if (request->times_sent >= 5) {
-	   printf("ARP times_sent >= 5!\n");
+	    printf("ARP times_sent >= 5!\n");
            /**
             * Send ICMP host unreachable to the source address of all packets
             * waiting on this request
@@ -145,8 +145,8 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
 
                 /** Set up the ICMP 3 header (note that destination unreachable messages are ICMP 3 not ICMP only) */
                 sr_icmp_t3_hdr_t *new_icmp3_header = (sr_icmp_t3_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
-                new_icmp3_header->icmp_type = htons(3);
-                new_icmp3_header->icmp_code = htons(1);
+                new_icmp3_header->icmp_type = 3;
+                new_icmp3_header->icmp_code = 1;
                 new_icmp3_header->unused = 0;
                 new_icmp3_header->next_mtu = 0;
 
@@ -167,7 +167,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
            sr_arpreq_destroy(&(sr->cache), request);
 
         } else {
-	    printf("Sent arp request %d!\n", request->times_sent + 1);
+	        printf("Sent arp request %d!\n", request->times_sent + 1);
             /**
              * Send ARP request to the request's IP
              * Update req->sent = now
@@ -175,6 +175,45 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
              */
             request->sent = cur_time;
             request->times_sent += 1;
+            
+            /** The interface used to send out the request */
+            char *out_iface = (request->packets)->iface;
+
+            /* Create new ethernet packet */
+            unsigned int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
+            uint8_t *arp_packet = malloc(arp_packet_len);
+
+            /* Add fields to ethernet packet */
+            struct sr_if *src_interface = sr_get_interface(sr, out_iface);
+            sr_ethernet_hdr_t *arp_packet_eth_headers = (sr_ethernet_hdr_t *) arp_packet;
+            uint8_t ether_dhost_val[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+            memcpy(arp_packet_eth_headers->ether_dhost, ether_dhost_val /** outgoing_interface->addr*/, sizeof(uint8_t) * ETHER_ADDR_LEN);
+            memcpy(arp_packet_eth_headers->ether_shost, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+            arp_packet_eth_headers->ether_type = htons(ethertype_arp);
+    
+            /* Set ARP header */
+            sr_arp_hdr_t *arp_packet_arp_headers = (sr_arp_hdr_t *) (arp_packet + sizeof(sr_ethernet_hdr_t));
+            arp_packet_arp_headers->ar_hrd = htons(arp_hrd_ethernet);
+            arp_packet_arp_headers->ar_pro = htons(ethertype_ip);
+            arp_packet_arp_headers->ar_hln = ETHER_ADDR_LEN;
+            arp_packet_arp_headers->ar_pln = sizeof(ethertype_ip);
+            arp_packet_arp_headers->ar_op  = htons(arp_op_request);
+
+            memcpy(arp_packet_arp_headers->ar_sha, src_interface->addr/*src_interface->addr*/, sizeof(uint8_t) * ETHER_ADDR_LEN);
+            arp_packet_arp_headers->ar_sip = src_interface->ip; /**ip_header->ip_src;*//*src_interface->ip;*/
+        
+            /** uint8_t broadcast_mac_addr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}; */
+            uint8_t broadcast_mac_addr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+            memcpy(arp_packet_arp_headers->ar_tha, broadcast_mac_addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+            arp_packet_arp_headers->ar_tip = request->ip;	    
+
+            printf("ARP Packet below!! \n");
+            print_hdrs(arp_packet, arp_packet_len);
+
+            sr_send_packet(sr, arp_packet, arp_packet_len, out_iface);
+            free(arp_packet);
+
+            return;
 
             /** Create new ARP request packet */
             struct sr_packet *curr_packet = request->packets;
