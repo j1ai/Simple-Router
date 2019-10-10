@@ -213,6 +213,9 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             }
             arp_packet_arp_headers->ar_tip = request->ip;
 
+            printf("ARP Packet below!! \n");
+	        print_hdrs(arp_packet, arp_packet_len);
+
             if (sr_send_packet(sr, arp_packet, arp_packet_len, src_interface) != 0) {
                 fprintf(stderr, "ERROR: Cannot send ARP Request packet\n");
 
