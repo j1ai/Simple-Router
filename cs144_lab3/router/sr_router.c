@@ -33,21 +33,21 @@
 
 void sr_init(struct sr_instance *sr)
 {
-    /* REQUIRES */
-    assert(sr);
+  /* REQUIRES */
+  assert(sr);
 
-    /* Initialize cache and cache cleanup thread */
-    sr_arpcache_init(&(sr->cache));
+  /* Initialize cache and cache cleanup thread */
+  sr_arpcache_init(&(sr->cache));
 
-    pthread_attr_init(&(sr->attr));
-    pthread_attr_setdetachstate(&(sr->attr), PTHREAD_CREATE_JOINABLE);
-    pthread_attr_setscope(&(sr->attr), PTHREAD_SCOPE_SYSTEM);
-    pthread_attr_setscope(&(sr->attr), PTHREAD_SCOPE_SYSTEM);
-    pthread_t thread;
+  pthread_attr_init(&(sr->attr));
+  pthread_attr_setdetachstate(&(sr->attr), PTHREAD_CREATE_JOINABLE);
+  pthread_attr_setscope(&(sr->attr), PTHREAD_SCOPE_SYSTEM);
+  pthread_attr_setscope(&(sr->attr), PTHREAD_SCOPE_SYSTEM);
+  pthread_t thread;
 
-    pthread_create(&thread, &(sr->attr), sr_arpcache_timeout, sr);
-    
-    /* Add initialization code here! */
+  pthread_create(&thread, &(sr->attr), sr_arpcache_timeout, sr);
+  
+  /* Add initialization code here! */
 
 } /* -- sr_init -- */
 
@@ -309,54 +309,54 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
  *---------------------------------------------------------------------*/
 void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-    printf("Received Net Unreachable IP Packet!\n");
+  printf("Received Net Unreachable IP Packet!\n");
 
-    /* Get the ethernet header */
-    sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+  /* Get the ethernet header */
+  sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
 
-    /* Get the IP header */
-    sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+  /* Get the IP header */
+  sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
-    /* Get the ICMP header */
-    sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+  /* Get the ICMP header */
+  sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
 
-    /* Swap the source and destination MAC addresses */
-    uint8_t new_ether_dhost[6];
-    uint8_t new_ether_shost[6];
-    memcpy(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-    memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-    memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-    memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  /* Swap the source and destination MAC addresses */
+  uint8_t new_ether_dhost[6];
+  uint8_t new_ether_shost[6];
+  memcpy(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
 
-    /* Swap the source and destination IP addresses */
-    uint32_t new_ip_src = ip_header->ip_dst;
-    uint32_t new_ip_dst = ip_header->ip_src;
-    ip_header->ip_src = new_ip_src;
-    ip_header->ip_dst = new_ip_dst;
+  /* Swap the source and destination IP addresses */
+  uint32_t new_ip_src = ip_header->ip_dst;
+  uint32_t new_ip_dst = ip_header->ip_src;
+  ip_header->ip_src = new_ip_src;
+  ip_header->ip_dst = new_ip_dst;
 
-    ip_header->ip_p = 1;
-    ip_header->ip_ttl = ip_header->ip_ttl - 1;
+  ip_header->ip_p = 1;
+  ip_header->ip_ttl = ip_header->ip_ttl - 1;
 
-    /* Change the ICMP type and code */
-    icmp_header->icmp_code = 0;
-    icmp_header->icmp_type = 3;
+  /* Change the ICMP type and code */
+  icmp_header->icmp_code = 0;
+  icmp_header->icmp_type = 3;
 
-    /* Recompute the checksum in the IP header */
-    ip_header->ip_sum = 0;
-    ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
+  /* Recompute the checksum in the IP header */
+  ip_header->ip_sum = 0;
+  ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
 
-    /* Recompute the checksum in the ICMP header */
-    /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
-    icmp_header->icmp_sum = 0;
-    icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+  /* Recompute the checksum in the ICMP header */
+  /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
+  icmp_header->icmp_sum = 0;
+  icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
-    printf("Sending ICMP Net Unreachable Reply Packet:\n");
-    print_hdrs(packet, len);
+  printf("Sending ICMP Net Unreachable Reply Packet:\n");
+  print_hdrs(packet, len);
 
-    /* Send the packet */
-    sr_send_packet(sr, packet, len, interface);
-    printf("Sent ICMP Net Unreachable Reply Packet!\n");
+  /* Send the packet */
+  sr_send_packet(sr, packet, len, interface);
+  printf("Sent ICMP Net Unreachable Reply Packet!\n");
 }
 
 /*---------------------------------------------------------------------
@@ -368,50 +368,50 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
  *---------------------------------------------------------------------*/
 void sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-    printf("Received Port Unreachable IP Packet!\n");
+  printf("Received Port Unreachable IP Packet!\n");
 
-    /* Get the ethernet header */
-    sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+  /* Get the ethernet header */
+  sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
 
-    /* Get the IP header */
-    sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+  /* Get the IP header */
+  sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
-    /* Get the ICMP header */
-    sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+  /* Get the ICMP header */
+  sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
-    /* Swap the source and destination MAC addresses */
-    uint8_t new_ether_dhost[6];
-    uint8_t new_ether_shost[6];
-    memcpy(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-    memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-    memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-    memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  /* Swap the source and destination MAC addresses */
+  uint8_t new_ether_dhost[6];
+  uint8_t new_ether_shost[6];
+  memcpy(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
 
-    /* Swap the source and destination IP addresses */
-    uint32_t new_ip_src = ip_header->ip_dst;
-    uint32_t new_ip_dst = ip_header->ip_src;
-    ip_header->ip_src = new_ip_src;
-    ip_header->ip_dst = new_ip_dst;
+  /* Swap the source and destination IP addresses */
+  uint32_t new_ip_src = ip_header->ip_dst;
+  uint32_t new_ip_dst = ip_header->ip_src;
+  ip_header->ip_src = new_ip_src;
+  ip_header->ip_dst = new_ip_dst;
 
-    ip_header->ip_p = 1;
-    ip_header->ip_ttl = ip_header->ip_ttl - 1;
+  ip_header->ip_p = 1;
+  ip_header->ip_ttl = ip_header->ip_ttl - 1;
 
-    /* Change the ICMP type and code */
-    icmp_header->icmp_code = 3;
-    icmp_header->icmp_type = 3;
+  /* Change the ICMP type and code */
+  icmp_header->icmp_code = 3;
+  icmp_header->icmp_type = 3;
 
-    /* Recompute the checksum in the IP header */
-    ip_header->ip_sum = 0;
-    ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
+  /* Recompute the checksum in the IP header */
+  ip_header->ip_sum = 0;
+  ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
 
-    /* Recompute the checksum in the ICMP header */
-    /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
-    icmp_header->icmp_sum = 0;
-    icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+  /* Recompute the checksum in the ICMP header */
+  /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
+  icmp_header->icmp_sum = 0;
+  icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
-    /* Send the packet */
-    sr_send_packet(sr, packet, len, interface);
-    printf("Sent ICMP Port Unreachable Reply Packet!\n");
+  /* Send the packet */
+  sr_send_packet(sr, packet, len, interface);
+  printf("Sent ICMP Port Unreachable Reply Packet!\n");
 }
 
 /*---------------------------------------------------------------------
@@ -423,50 +423,50 @@ void sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
  *---------------------------------------------------------------------*/
 void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-    printf("Received Host Unreachable IP Packet!\n");
+  printf("Received Host Unreachable IP Packet!\n");
 
-    /* Get the ethernet header */
-    sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+  /* Get the ethernet header */
+  sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
 
-    /* Get the IP header */
-    sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+  /* Get the IP header */
+  sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
-    /* Get the ICMP header */
-    sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+  /* Get the ICMP header */
+  sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
-    /* Swap the source and destination MAC addresses */
-    uint8_t new_ether_dhost[6];
-    uint8_t new_ether_shost[6];
-    memcpy(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-    memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-    memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-    memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  /* Swap the source and destination MAC addresses */
+  uint8_t new_ether_dhost[6];
+  uint8_t new_ether_shost[6];
+  memcpy(new_ether_dhost, ethernet_header->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  memcpy(new_ether_shost, ethernet_header->ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  memcpy(ethernet_header->ether_dhost, new_ether_dhost, sizeof(uint8_t) * ETHER_ADDR_LEN);
+  memcpy(ethernet_header->ether_shost, new_ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
 
-    /* Swap the source and destination IP addresses */
-    uint32_t new_ip_src = ip_header->ip_dst;
-    uint32_t new_ip_dst = ip_header->ip_src;
-    ip_header->ip_src = new_ip_src;
-    ip_header->ip_dst = new_ip_dst;
+  /* Swap the source and destination IP addresses */
+  uint32_t new_ip_src = ip_header->ip_dst;
+  uint32_t new_ip_dst = ip_header->ip_src;
+  ip_header->ip_src = new_ip_src;
+  ip_header->ip_dst = new_ip_dst;
 
-    ip_header->ip_p = 1;
-    ip_header->ip_ttl = ip_header->ip_ttl - 1;
+  ip_header->ip_p = 1;
+  ip_header->ip_ttl = ip_header->ip_ttl - 1;
 
-    /* Change the ICMP type and code */
-    icmp_header->icmp_code = 1;
-    icmp_header->icmp_type = 3;
+  /* Change the ICMP type and code */
+  icmp_header->icmp_code = 1;
+  icmp_header->icmp_type = 3;
 
-    /* Recompute the checksum in the IP header */
-    ip_header->ip_sum = 0;
-    ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
+  /* Recompute the checksum in the IP header */
+  ip_header->ip_sum = 0;
+  ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
 
-    /* Recompute the checksum in the ICMP header */
-    /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
-    icmp_header->icmp_sum = 0;
-    icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
+  /* Recompute the checksum in the ICMP header */
+  /* Note that the ICMP checksum only uses the ICMP header values not the packet data */
+  icmp_header->icmp_sum = 0;
+  icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
-    /* Send the packet */
-    sr_send_packet(sr, packet, len, interface);
-    printf("Sent ICMP Host Unreachable Reply Packet!\n");
+  /* Send the packet */
+  sr_send_packet(sr, packet, len, interface);
+  printf("Sent ICMP Host Unreachable Reply Packet!\n");
 }
 
 /*---------------------------------------------------------------------
@@ -478,10 +478,8 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
  *---------------------------------------------------------------------*/
 void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-
-    /* TODO: Do something if the IP packet TTL is0 */
-    printf("Received TTL execeeded IP Packet!\n");
-
+  /* TODO: Do something if the IP packet TTL is0 */
+  printf("Received TTL execeeded IP Packet!\n");
 }
 
 
@@ -496,53 +494,53 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 {
 
   /* TODO: Do something if the IP packet is not for this router */
-    printf("Received Foreign IP Packet!\n");
+  printf("Received Foreign IP Packet!\n");
 
-    /* Get the ethernet header */
-    sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
+  /* Get the ethernet header */
+  sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
 
-    /* Get the IP header */
-    sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+  /* Get the IP header */
+  sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
-    if (ip_header->ip_ttl <= 1){
-        sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
-        return;
+  if (ip_header->ip_ttl <= 1){
+    sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
+    return;
+  }
+
+  struct sr_rt *routing_entry = sr->routing_table;
+  struct sr_if *outgoing_interface = NULL;
+
+  while(routing_entry){
+    uint32_t cur_route = ip_header->ip_dst & routing_entry->mask.s_addr;
+    if (cur_route == routing_entry->dest.s_addr){
+        outgoing_interface = sr_get_interface(sr,routing_entry->interface);
+        break;
     }
+    routing_entry = routing_entry->next;
+  }
 
-    struct sr_rt *routing_entry = sr->routing_table;
-    struct sr_if *outgoing_interface = NULL;
+  /** If there is a matched outgoing interface from routing table */
+  if(outgoing_interface){
 
-    while(routing_entry){
-        uint32_t cur_route = ip_header->ip_dst & routing_entry->mask.s_addr;
-        if (cur_route == routing_entry->dest.s_addr){
-            outgoing_interface = sr_get_interface(sr,routing_entry->interface);
-            break;
-        }
-        routing_entry = routing_entry->next;
+    /* Swap the source MAC addresses */
+    memcpy(ethernet_header->ether_shost, outgoing_interface->addr, ETHER_ADDR_LEN);
+
+    /** Search the ARP Cache */
+    struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), ip_header->ip_dst);
+
+    /** If arp cache entry is hit */
+    if(arp_cache_entry){
+        /** Send frame to next hop */
     }
-
-    /** If there is a matched outgoing interface from routing table */
-    if(outgoing_interface){
-
-        /* Swap the source MAC addresses */
-        memcpy(ethernet_header->ether_shost, outgoing_interface->addr, ETHER_ADDR_LEN);
-
-        /** Search the ARP Cache */
-        struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), ip_header->ip_dst);
-
-        /** If arp cache entry is hit */
-        if(arp_cache_entry){
-            /** Send frame to next hop */
-        }
-        else{
-            /** Send ARP request */
-        }
-
-    }
-    /** ICMP Net Unreachable */
     else{
-        sr_handle_net_unreachable_ip_packet(sr,packet,len,interface);
+        /** Send ARP request */
     }
+
+  }
+  /** ICMP Net Unreachable */
+  else{
+    sr_handle_net_unreachable_ip_packet(sr,packet,len,interface);
+  }
 }
 
 /**
