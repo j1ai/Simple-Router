@@ -377,8 +377,8 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   
   new_ip_header->ip_len = htons(56); /* ip_hdr->ip_len;         total length */
   new_ip_header->ip_id = 0; /*ip_hdr->ip_id;*/          /* identification */
-  new_ip_header->ip_off = htons(IP_DF);        /* fragment offset field */
-  new_ip_header->ip_ttl = 64;                    /* time to live */
+  new_ip_header->ip_off = IP_DF;        /* fragment offset field */
+  new_ip_header->ip_ttl = 64;
   new_ip_header->ip_p = ip_protocol_icmp;            /* protocol */
   /* source and destination should be altered */
   new_ip_header->ip_src = out_iface->ip;/* ip_hdr->ip_dst;  */      /* source address */
