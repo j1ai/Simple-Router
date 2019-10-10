@@ -523,6 +523,9 @@ void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, 
 
   if (sr_send_packet(sr, new_packet, new_packet_len, interface) != 0) {
     fprintf(stderr, "ERROR: Packet sent unsuccessfully\n");
+    
+  } else {
+    printf("Sent TTL exceeded IP Packet\n");
   }
   free(new_packet);
 }
