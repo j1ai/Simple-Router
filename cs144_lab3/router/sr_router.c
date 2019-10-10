@@ -404,7 +404,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
  *---------------------------------------------------------------------*/
 void sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-  printf("Received Port Unreachable IP Packet!\n");
+  printf("Port Unreachable IP Packet!\n");
 
   /* Get the ethernet header */
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
