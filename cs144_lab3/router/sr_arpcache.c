@@ -191,7 +191,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             struct sr_if *src_interface = sr_get_interface(sr, out_iface);
             sr_ethernet_hdr_t *arp_packet_eth_headers = (sr_ethernet_hdr_t *) arp_packet;
             uint8_t ether_dhost_val[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-            memcpy(arp_packet_eth_headers->ether_dhost, ether_dhost_val /** outgoing_interface->addr*/, sizeof(uint8_t) * ETHER_ADDR_LEN);
+            memcpy(arp_packet_eth_headers->ether_dhost, ether_dhost_val, sizeof(uint8_t) * ETHER_ADDR_LEN);
             memcpy(arp_packet_eth_headers->ether_shost, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
             arp_packet_eth_headers->ether_type = htons(ethertype_arp);
     
@@ -203,8 +203,8 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             arp_packet_arp_headers->ar_pln = sizeof(ethertype_ip);
             arp_packet_arp_headers->ar_op  = htons(arp_op_request);
 
-            memcpy(arp_packet_arp_headers->ar_sha, src_interface->addr/*src_interface->addr*/, sizeof(uint8_t) * ETHER_ADDR_LEN);
-            arp_packet_arp_headers->ar_sip = src_interface->ip; /**ip_header->ip_src;*//*src_interface->ip;*/
+            memcpy(arp_packet_arp_headers->ar_sha, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+            arp_packet_arp_headers->ar_sip = src_interface->ip;
         
             /** uint8_t broadcast_mac_addr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}; */
             uint8_t broadcast_mac_addr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
