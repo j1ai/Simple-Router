@@ -100,7 +100,7 @@ void sr_setup_new_ip_headers(sr_ip_hdr_t *new_ip_header, uint8_t len, enum sr_ip
   new_ip_header->ip_hl = sizeof(sr_ip_hdr_t) / 4;
 	new_ip_header->ip_v = 4;
   new_ip_header->ip_tos = 0;
-  new_ip_header->ip_len = htons(56);
+  new_ip_header->ip_len = htons(len);
   new_ip_header->ip_id = htons(0);
   new_ip_header->ip_off = htons(IP_DF);
   new_ip_header->ip_ttl = htons(64);
@@ -393,7 +393,7 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
 
   /** Set up the headers */
   sr_setup_new_ethernet_headers(new_ethernet_header, out_iface->addr, ethernet_header->ether_shost, ethertype_ip);
-  sr_setup_new_ip_headers(new_ip_header, ip_header->ip_hl, ip_protocol_icmp, out_iface->ip, ip_header->ip_src);
+  sr_setup_new_ip_headers(new_ip_header, ip_header->ip_hl, sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t), ip_protocol_icmp, out_iface->ip, ip_header->ip_src);
   sr_setup_new_icmp3_headers(new_icmp_header, ip_header);
 
   /** Send the packet */
