@@ -222,6 +222,8 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 
     /** Resend the packets in the ARP request */
     if (arp_request != NULL) {
+      printf("Sending all pending packets\n");
+
       struct sr_packet *cur_packet = arp_request->packets;
       while (cur_packet != NULL) {
 
@@ -234,8 +236,16 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
         sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
         memcpy(ethernet_header->ether_dhost, src_mac_address, sizeof(uint8_t) * ETHER_ADDR_LEN);
 
+        printf("Packet to send:\n");
+        print_hdrs(packet, packet_len);
+
         /** Send the packet */
-        sr_send_packet(sr, packet, packet_len, iface);
+        if (sr_send_packet(sr, packet, packet_len, iface) != 0) {
+          fprintf(stderr, "ERROR: Unable to forward packet!\n");
+          
+        } else {
+          printf("Successfully forwarded packet\n");
+        }
 
         cur_packet = cur_packet->next;
       }
@@ -575,7 +585,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
         printf("Sent Foreign IP Packet!\n");
       }
       free(arp_cache_entry);
-      
+
     } else {
 	    printf("Cache missed!\n");
       struct sr_arpreq *arp_request = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name);
