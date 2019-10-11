@@ -630,7 +630,13 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
 
     } else if (ip_proto == ip_protocol_tcp || ip_proto == ip_protocol_udp) {
       printf("Protocol is TCP/UDP!\n");
-      sr_handle_port_unreachable_ip_packet(sr, packet, len, interface);
+      if (ip_header->ip_ttl <= 1){
+        printf("Packet's TTL expired!\n");
+        sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
+
+      } else {
+        sr_handle_port_unreachable_ip_packet(sr, packet, len, interface);
+      }
     }
 
   } else {
