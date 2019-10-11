@@ -523,8 +523,6 @@ void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, 
  *---------------------------------------------------------------------*/
 void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-
-  /* TODO: Do something if the IP packet is not for this router */
   printf("Received Foreign IP Packet!\n");
 
   /* Get the ethernet header */
