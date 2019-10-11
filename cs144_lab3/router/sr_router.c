@@ -222,6 +222,8 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
 
     /** Resend the packets in the ARP request */
     if (arp_request != NULL) {
+      printf("Sending all pending packets\n");
+
       struct sr_packet *cur_packet = arp_request->packets;
       while (cur_packet != NULL) {
 
@@ -234,8 +236,16 @@ void sr_handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int 
         sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
         memcpy(ethernet_header->ether_dhost, src_mac_address, sizeof(uint8_t) * ETHER_ADDR_LEN);
 
+        printf("Packet to send:\n");
+        print_hdrs(packet, packet_len);
+
         /** Send the packet */
-        sr_send_packet(sr, packet, packet_len, iface);
+        if (sr_send_packet(sr, packet, packet_len, iface) != 0) {
+          fprintf(stderr, "ERROR: Unable to forward packet!\n");
+          
+        } else {
+          printf("Successfully forwarded packet\n");
+        }
 
         cur_packet = cur_packet->next;
       }
@@ -307,7 +317,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     uint32_t new_ip_dst = ip_header->ip_src;
     ip_header->ip_src = new_ip_src;
     ip_header->ip_dst = new_ip_dst;
-    ip_header->ip_ttl = ip_header->ip_ttl - 1;
+    ip_header->ip_ttl = 100;
 
     /* Change the ICMP type and code */
     icmp_header->icmp_code = 0;
@@ -482,6 +492,7 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
 void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
   printf("Received TTL execeeded IP Packet!\n");
+  struct sr_if *sr_if_interface = sr_get_interface(sr, interface);
 
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
@@ -495,8 +506,8 @@ void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, 
   sr_ip_hdr_t *new_ip_header = (sr_ip_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t));
   sr_icmp_t3_hdr_t *new_icmp_header = (sr_icmp_t3_hdr_t *) (new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
-  sr_setup_new_ethernet_headers(new_ethernet_header, ethernet_header->ether_dhost, ethernet_header->ether_shost, ethernet_header->ether_type);
-  sr_setup_new_ip_headers(new_ip_header, sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t), ip_protocol_icmp, ip_header->ip_dst, ip_header->ip_src);
+  sr_setup_new_ethernet_headers(new_ethernet_header, sr_if_interface->addr, ethernet_header->ether_shost, ethernet_header->ether_type);
+  sr_setup_new_ip_headers(new_ip_header, sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t), ip_protocol_icmp, sr_if_interface->ip, ip_header->ip_src);
   sr_setup_new_icmp3_headers(new_icmp_header, ip_header, 11, 0);
 
   new_ip_header->ip_ttl = 0;
@@ -525,8 +536,6 @@ void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, 
  *---------------------------------------------------------------------*/
 void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-
-  /* TODO: Do something if the IP packet is not for this router */
   printf("Received Foreign IP Packet!\n");
 
   /* Get the ethernet header */
@@ -535,11 +544,22 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
   /* Get the IP header */
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
+  if (ip_header->ip_ttl <= 1){
+    printf("Packet's TTL expired!\n");
+    sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
+    return;
+  }
+
   struct sr_rt *routing_entry = sr_get_routing_entry_using_lpm(sr, ip_header->ip_dst);
   struct sr_rt *routing_entry2 = sr_get_routing_entry_using_lpm(sr, ip_header->ip_src);
 
+  /** Reduce the TTL count */
+  ip_header->ip_ttl -= 1;
+  ip_header->ip_sum = 0;
+  ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
+
   /** If there is a matched outgoing interface from routing table */
-  if(routing_entry){
+  if (routing_entry){
     struct sr_if *outgoing_interface = sr_get_interface(sr, routing_entry->interface);
     struct sr_if *source_interface = sr_get_interface(sr, routing_entry2->interface);
 
@@ -551,69 +571,25 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
         
     /** If arp cache entry is hit */
     if (arp_cache_entry) {
+      printf("ARP Cache Hit!\n");
         /**
           Send frame to next hop:
           1.  use next_hop_ip->mac mapping in entry to send the packet
           2.  free entry
         */
-        memcpy(ethernet_header->ether_dhost, arp_cache_entry->mac, sizeof(uint8_t) * ETHER_ADDR_LEN);
-        sr_send_packet(sr, packet, len, outgoing_interface->name);
-        free(arp_cache_entry);
+
+      memcpy(ethernet_header->ether_dhost, arp_cache_entry->mac, sizeof(uint8_t) * ETHER_ADDR_LEN);
+      if (sr_send_packet(sr, packet, len, outgoing_interface->name) != 0) {
+        fprintf(stderr, "ERROR: Unable to send frame to next hop!\n");
+      } else {
         printf("Sent Foreign IP Packet!\n");
+      }
+      free(arp_cache_entry);
 
     } else {
 	    printf("Cache missed!\n");
-	    /* Create new ethernet packet
-	    unsigned int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
-	    uint8_t *arp_packet = malloc(arp_packet_len);
-      */
-
-	    /* Add fields to ethernet packet
-	    struct sr_if *src_interface = sr_get_interface(sr, interface);
-	    sr_ethernet_hdr_t *arp_packet_eth_headers = (sr_ethernet_hdr_t *) arp_packet;
-	    memcpy(arp_packet_eth_headers->ether_dhost, outgoing_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    memcpy(arp_packet_eth_headers->ether_shost, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    arp_packet_eth_headers->ether_type = htons(ethertype_arp);
-      */
- 
-	    /* Set ARP header
-	    sr_arp_hdr_t *arp_packet_arp_headers = (sr_arp_hdr_t *) (arp_packet + sizeof(sr_ethernet_hdr_t));
-	    arp_packet_arp_headers->ar_hrd = htons(arp_hrd_ethernet);
-	    arp_packet_arp_headers->ar_pro = htons(ethertype_ip);
-	    arp_packet_arp_headers->ar_hln = ETHER_ADDR_LEN;
-	    arp_packet_arp_headers->ar_pln = sizeof(ethertype_ip);
-	    arp_packet_arp_headers->ar_op  = htons(arp_op_request);
-      */
-
-	   	/*
-	    memcpy(arp_packet_arp_headers->ar_sha, source_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    arp_packet_arp_headers->ar_sip = ip_header->ip_src;
-      */
-	    
-      /*
-            uint8_t broadcast_mac_addr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-	    memcpy(arp_packet_arp_headers->ar_tha, broadcast_mac_addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    arp_packet_arp_headers->ar_tip = ip_header->ip_dst;	    
-      */
-      
-      /*
-	    printf("ARP Packet below!! \n");
-	    print_hdrs(arp_packet, arp_packet_len);
-      */
-
-	    /* Send ARP request */
-      /*
-	    struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), routing_entry->gw.s_addr,
-                                                              arp_packet, arp_packet_len, routing_entry->interface);
-      time_t cur_time;
-      time (&cur_time);
-      arp_req->sent = cur_time;
-      arp_req->times_sent = 1;
-  
-      sr_send_packet(sr, arp_packet, arp_packet_len, interface);
-      */
-      struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name);
-      handle_arpreq(sr, arp_req);
+      struct sr_arpreq *arp_request = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name);
+      handle_arpreq(sr, arp_request);
     }
   }
   /** ICMP Net Unreachable */
@@ -658,12 +634,6 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
     return;
   }
 
-  if (ip_header->ip_ttl <= 1){
-    printf("Packet's TTL expired!\n");
-    sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
-    return;
-  }
-
   if (is_ip_packet_for_me(sr, ip_header->ip_dst) == 1) {
     
     /** Get the protocol of the IP packet */
@@ -674,7 +644,13 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
 
     } else if (ip_proto == ip_protocol_tcp || ip_proto == ip_protocol_udp) {
       printf("Protocol is TCP/UDP!\n");
-      sr_handle_port_unreachable_ip_packet(sr, packet, len, interface);
+      if (ip_header->ip_ttl <= 1){
+        printf("Packet's TTL expired!\n");
+        sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
+
+      } else {
+        sr_handle_port_unreachable_ip_packet(sr, packet, len, interface);
+      }
     }
 
   } else {
