@@ -493,7 +493,6 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
  *---------------------------------------------------------------------*/
 void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
-  /* TODO: Do something if the IP packet TTL is 0 */
   printf("Received TTL execeeded IP Packet!\n");
 
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
@@ -512,10 +511,18 @@ void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, 
   sr_setup_new_ip_headers(new_ip_header, sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t), ip_protocol_icmp, ip_header->ip_dst, ip_header->ip_src);
   sr_setup_new_icmp3_headers(new_icmp_header, ip_header, 11, 0);
 
+  new_ip_header->ip_ttl = 0;
+
   printf("Sending TTL exceeded IP Packet\n");
+
+  print_hdrs(new_packet, new_packet_len);
+
 
   if (sr_send_packet(sr, new_packet, new_packet_len, interface) != 0) {
     fprintf(stderr, "ERROR: Packet sent unsuccessfully\n");
+
+  } else {
+    printf("Sent TTL exceeded IP Packet\n");
   }
   free(new_packet);
 }
@@ -539,11 +546,6 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 
   /* Get the IP header */
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
-
-  if (ip_header->ip_ttl <= 1){
-    sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
-    return;
-  }
 
   struct sr_rt *routing_entry = sr_get_routing_entry_using_lpm(sr, ip_header->ip_dst);
   struct sr_rt *routing_entry2 = sr_get_routing_entry_using_lpm(sr, ip_header->ip_src);
@@ -570,7 +572,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
         sr_send_packet(sr, packet, len, outgoing_interface->name);
         free(arp_cache_entry);
         printf("Sent Foreign IP Packet!\n");
-        
+
     } else {
 	    printf("Cache missed!\n");
       struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name);
@@ -616,6 +618,12 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
 
   if (verify_ip_header_checksum(ip_header) != 1) {
     fprintf(stderr, "ERROR: IP Header's checksum is incorrect!\n");
+    return;
+  }
+
+  if (ip_header->ip_ttl <= 1){
+    printf("Packet's TTL expired!\n");
+    sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
     return;
   }
 
