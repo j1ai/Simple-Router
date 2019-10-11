@@ -370,7 +370,7 @@ struct sr_rt *sr_get_routing_entry_using_lpm(struct sr_instance *sr, uint32_t ip
 
   while (routing_entry){
     uint32_t cur_route = ip & routing_entry->mask.s_addr;
-    if (cur_route == routing_entry->dest.s_addr){
+    if (cur_route == (routing_entry->dest.s_addr & routing_entry->mask.s_addr)){
       break;
     }
     routing_entry = routing_entry->next;
