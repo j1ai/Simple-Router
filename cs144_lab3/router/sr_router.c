@@ -531,6 +531,12 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
   /* Get the IP header */
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
+  if (ip_header->ip_ttl <= 1){
+    printf("Packet's TTL expired!\n");
+    sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
+    return;
+  }
+
   struct sr_rt *routing_entry = sr_get_routing_entry_using_lpm(sr, ip_header->ip_dst);
   struct sr_rt *routing_entry2 = sr_get_routing_entry_using_lpm(sr, ip_header->ip_src);
 
@@ -540,7 +546,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
   ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
 
   /** If there is a matched outgoing interface from routing table */
-  if(routing_entry){
+  if (routing_entry){
     struct sr_if *outgoing_interface = sr_get_interface(sr, routing_entry->interface);
     struct sr_if *source_interface = sr_get_interface(sr, routing_entry2->interface);
 
@@ -608,12 +614,6 @@ void sr_handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int l
 
   if (verify_ip_header_checksum(ip_header) != 1) {
     fprintf(stderr, "ERROR: IP Header's checksum is incorrect!\n");
-    return;
-  }
-
-  if (ip_header->ip_ttl <= 1){
-    printf("Packet's TTL expired!\n");
-    sr_handle_time_exceeded_ip_packet(sr, packet, len, interface);
     return;
   }
 
