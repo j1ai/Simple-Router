@@ -366,17 +366,22 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
  * This method finds the routing entry using LPM
  *---------------------------------------------------------------------*/
 struct sr_rt *sr_get_routing_entry_using_lpm(struct sr_instance *sr, uint32_t ip) {
-  struct sr_rt *routing_entry = sr->routing_table;
+  struct sr_rt *cur_routing_entry = sr->routing_table;
+  struct sr_rt *longest_routing_entry = NULL;
+  int max_routing_entry_len = 0;
 
-  while (routing_entry){
-    uint32_t cur_route = ip & routing_entry->mask.s_addr;
-    if (cur_route == (routing_entry->mask.s_addr & routing_entry->dest.s_addr)){
-      break;
+  while (cur_routing_entry){
+    uint32_t cur_route = ip & cur_routing_entry->mask.s_addr;
+    if (cur_route == (cur_routing_entry->mask.s_addr & cur_routing_entry->dest.s_addr)){
+      if (cur_route > max_routing_entry_len) {
+        max_routing_entry_len = cur_route;
+        longest_routing_entry = cur_routing_entry;
+      }
     }
-    routing_entry = routing_entry->next;
+    cur_routing_entry = cur_routing_entry->next;
   }
 
-  return routing_entry;
+  return longest_routing_entry;
 }
 
 /*---------------------------------------------------------------------
