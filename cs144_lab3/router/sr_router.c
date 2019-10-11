@@ -307,7 +307,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     uint32_t new_ip_dst = ip_header->ip_src;
     ip_header->ip_src = new_ip_src;
     ip_header->ip_dst = new_ip_dst;
-    ip_header->ip_ttl = ip_header->ip_ttl - 1;
+    ip_header->ip_ttl = 100;
 
     /* Change the ICMP type and code */
     icmp_header->icmp_code = 0;
