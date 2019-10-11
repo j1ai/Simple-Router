@@ -476,10 +476,14 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
 {
   printf("Received Host Unreachable IP Packet!\n");
 
- /* Get the ethernet header */
+  /* Get the ethernet header */
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
   sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+
+  /* Get the interface of the client */
+  struct sr_rt *client_routing_entry = sr_get_routing_entry_using_lpm(sr, ip_header->ip_src);
+  char *client_interface = sr_get_interface(sr, client_routing_entry->interface);
 
   int new_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
   uint8_t *new_packet = malloc(new_packet_len);
@@ -489,7 +493,7 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
   sr_ip_hdr_t *new_ip_header = (sr_ip_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t));
   sr_icmp_t3_hdr_t *new_icmp_header = (sr_icmp_t3_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
-  struct sr_if *packet_if = sr_get_interface(sr,interface);
+  /* struct sr_if *packet_if = sr_get_interface(sr,interface); */
 
   /** Set up the headers */
   sr_setup_new_ethernet_headers(new_ethernet_header, ethernet_header->ether_dhost, ethernet_header->ether_shost, ethernet_header->ether_type);
@@ -498,7 +502,7 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
 
   /** Send the packet */
   printf("Sending ICMP Host Unreachable IP Packet!\n");
-  if (sr_send_packet(sr, new_packet, new_packet_len, interface) != 0) {
+  if (sr_send_packet(sr, new_packet, new_packet_len, client_interface) != 0) {
     fprintf(stderr, "ERROR: Packet sent unsuccessfully\n");
   }
   free(new_packet);
