@@ -582,7 +582,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
           2.  free entry
         */
 
-      memcpy(ethernet_header->ether_dhost, arp_cache_entry->mac, sizeof(uint8_t) * ETHER_ADDR_LEN);
+      memcpy(ethernet_header->ether_dhost, arp_cache_entry->mac, ETHER_ADDR_LEN);
       if (sr_send_packet(sr, packet, len, outgoing_interface->name) != 0) {
         fprintf(stderr, "ERROR: Unable to send frame to next hop!\n");
       } else {

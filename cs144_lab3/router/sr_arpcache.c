@@ -133,6 +133,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
                 arp_packet_eth_headers->ether_dhost[i] = 255;          
             }
             memcpy(arp_packet_eth_headers->ether_shost, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+
             arp_packet_eth_headers->ether_type = htons(ethertype_arp);
     
             /* Set ARP header */
