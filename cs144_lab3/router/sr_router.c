@@ -612,8 +612,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
   
       sr_send_packet(sr, arp_packet, arp_packet_len, interface);
       */
-      struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name);
-      handle_arpreq(sr, arp_req);
+      sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name);
     }
   }
   /** ICMP Net Unreachable */
