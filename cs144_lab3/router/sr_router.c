@@ -332,9 +332,26 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     icmp_header->icmp_sum = 0;
     icmp_header->icmp_sum = cksum(icmp_header, len - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t));
 
-    /* Send the packet */
-    sr_send_packet(sr, packet, len, interface);
-    printf("Sent ICMP Reply Packet!\n");
+    /* Send an ARP request if we don't know the client */
+    struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), new_ip_dst);
+    if (arp_cache_entry == NULL) {
+      printf("No ARP entry for the client's IP address!!\n");
+      struct sr_arpreq *arp_request = sr_arpcache_queuereq(&(sr->cache), new_ip_dst, packet, len, interface);
+      printf("Sent ARP request to client!\n");
+
+    } else {
+      if (sr_send_packet(sr, packet, len, interface) != 0) {
+        fprintf(stderr, "ERROR: Unable to send ICMP reply packet!\n");
+
+      } else {
+        printf("Sent ICMP Reply Packet!\n");
+      }
+    }
+
+    
+    /*
+    
+    */
 
   } else {
     /* TODO: Do something if it is not a ECHO request*/
