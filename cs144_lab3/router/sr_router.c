@@ -605,7 +605,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 
     } else {
 	    printf("Cache missed!\n");
-      struct sr_arpreq *arp_request = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name); /** source_interface->name doesn't work*/
+      struct sr_arpreq *arp_request = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, interface); /** source_interface->name doesn't work*/
       handle_arpreq(sr, arp_request);
     }
   }
