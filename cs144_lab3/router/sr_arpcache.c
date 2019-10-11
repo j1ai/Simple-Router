@@ -117,23 +117,50 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
            sr_arpreq_destroy(&(sr->cache), request);
 
         } else {
-	    printf("Sent arp request %d!\n", request->times_sent + 1);
-            /**
-             * Send ARP request to the request's IP
-             * Update req->sent = now
-             * Update req->times_sent += 1
-             */
+	        printf("Sent arp request %d!\n", request->times_sent + 1);
+            
             request->sent = cur_time;
             request->times_sent += 1;
 
-            /** Create new ARP request packet */
-            struct sr_packet *curr_packet = request->packets;
-            struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), request->ip,
-                        curr_packet->buf, curr_packet->len, curr_packet->iface);
-            struct sr_packet *new_packet = arp_req->packets;
+            int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
+            uint8_t *arp_packet = malloc(arp_packet_len);
 
-            /** Send an ARP request to the request's IP */
-            sr_send_packet(sr, new_packet->buf, new_packet->len, new_packet->iface);
+            /* Add fields to ethernet packet */
+            struct sr_if *src_interface = sr_get_interface(sr, request->packets->iface);
+            sr_ethernet_hdr_t *arp_packet_eth_headers = (sr_ethernet_hdr_t *) arp_packet;
+            int i = 0;
+            for (i = 0; i < ETHER_ADDR_LEN; i++) {
+                arp_packet_eth_headers->ether_dhost[i] = 255;          
+            }
+            memcpy(arp_packet_eth_headers->ether_shost, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+            arp_packet_eth_headers->ether_type = htons(ethertype_arp);
+    
+            /* Set ARP header */
+            sr_arp_hdr_t *arp_packet_arp_headers = (sr_arp_hdr_t *) (arp_packet + sizeof(sr_ethernet_hdr_t));
+            arp_packet_arp_headers->ar_hrd = htons(arp_hrd_ethernet);
+            arp_packet_arp_headers->ar_pro = htons(ethertype_ip);
+            arp_packet_arp_headers->ar_hln = ETHER_ADDR_LEN;
+            arp_packet_arp_headers->ar_pln = 4;
+            arp_packet_arp_headers->ar_op  = htons(arp_op_request);
+
+            memcpy(arp_packet_arp_headers->ar_sha, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+            arp_packet_arp_headers->ar_sip = src_interface->ip;
+
+            for (i = 0; i < ETHER_ADDR_LEN; i++) {
+                arp_packet_arp_headers->ar_tha[i] = 255;
+            }
+            arp_packet_arp_headers->ar_tip = request->ip;
+
+            printf("ARP Packet below!! \n");
+	        print_hdrs(arp_packet, arp_packet_len);
+
+            if (sr_send_packet(sr, arp_packet, arp_packet_len, src_interface) != 0) {
+                fprintf(stderr, "ERROR: Cannot send ARP Request packet\n");
+
+            } else {
+                printf("Sent ARP Request!!\n");
+            }
+            free(arp_packet);
         }
     }
 }
