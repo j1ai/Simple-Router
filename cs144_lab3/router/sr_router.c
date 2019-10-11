@@ -479,6 +479,7 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
 void sr_handle_time_exceeded_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len, char *interface)
 {
   printf("Received TTL execeeded IP Packet!\n");
+  struct sr_if *sr_if_interface = sr_get_interface(sr, interface);
 
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *) (packet + sizeof(sr_ethernet_hdr_t));
@@ -535,6 +536,11 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
   struct sr_rt *routing_entry = sr_get_routing_entry_using_lpm(sr, ip_header->ip_dst);
   struct sr_rt *routing_entry2 = sr_get_routing_entry_using_lpm(sr, ip_header->ip_src);
 
+  /** Reduce the TTL count */
+  ip_header->ip_ttl -= 1;
+  ip_header->ip_sum = 0;
+  ip_header->ip_sum = cksum(ip_header, sizeof(sr_ip_hdr_t));
+
   /** If there is a matched outgoing interface from routing table */
   if(routing_entry){
     struct sr_if *outgoing_interface = sr_get_interface(sr, routing_entry->interface);
@@ -553,6 +559,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
           1.  use next_hop_ip->mac mapping in entry to send the packet
           2.  free entry
         */
+
         memcpy(ethernet_header->ether_dhost, arp_cache_entry->mac, sizeof(uint8_t) * ETHER_ADDR_LEN);
         sr_send_packet(sr, packet, len, outgoing_interface->name);
         free(arp_cache_entry);
@@ -560,55 +567,6 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 
     } else {
 	    printf("Cache missed!\n");
-	    /* Create new ethernet packet
-	    unsigned int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
-	    uint8_t *arp_packet = malloc(arp_packet_len);
-      */
-
-	    /* Add fields to ethernet packet
-	    struct sr_if *src_interface = sr_get_interface(sr, interface);
-	    sr_ethernet_hdr_t *arp_packet_eth_headers = (sr_ethernet_hdr_t *) arp_packet;
-	    memcpy(arp_packet_eth_headers->ether_dhost, outgoing_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    memcpy(arp_packet_eth_headers->ether_shost, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    arp_packet_eth_headers->ether_type = htons(ethertype_arp);
-      */
- 
-	    /* Set ARP header
-	    sr_arp_hdr_t *arp_packet_arp_headers = (sr_arp_hdr_t *) (arp_packet + sizeof(sr_ethernet_hdr_t));
-	    arp_packet_arp_headers->ar_hrd = htons(arp_hrd_ethernet);
-	    arp_packet_arp_headers->ar_pro = htons(ethertype_ip);
-	    arp_packet_arp_headers->ar_hln = ETHER_ADDR_LEN;
-	    arp_packet_arp_headers->ar_pln = sizeof(ethertype_ip);
-	    arp_packet_arp_headers->ar_op  = htons(arp_op_request);
-      */
-
-	   	/*
-	    memcpy(arp_packet_arp_headers->ar_sha, source_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    arp_packet_arp_headers->ar_sip = ip_header->ip_src;
-      */
-	    
-      /*
-            uint8_t broadcast_mac_addr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-	    memcpy(arp_packet_arp_headers->ar_tha, broadcast_mac_addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
-	    arp_packet_arp_headers->ar_tip = ip_header->ip_dst;	    
-      */
-      
-      /*
-	    printf("ARP Packet below!! \n");
-	    print_hdrs(arp_packet, arp_packet_len);
-      */
-
-	    /* Send ARP request */
-      /*
-	    struct sr_arpreq *arp_req = sr_arpcache_queuereq(&(sr->cache), routing_entry->gw.s_addr,
-                                                              arp_packet, arp_packet_len, routing_entry->interface);
-      time_t cur_time;
-      time (&cur_time);
-      arp_req->sent = cur_time;
-      arp_req->times_sent = 1;
-  
-      sr_send_packet(sr, arp_packet, arp_packet_len, interface);
-      */
       sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name);
     }
   }
