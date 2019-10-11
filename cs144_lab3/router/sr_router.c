@@ -573,7 +573,6 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
   }
 
   struct sr_rt *routing_entry = sr_get_routing_entry_using_lpm(sr, ip_header->ip_dst);
-  struct sr_rt *routing_entry2 = sr_get_routing_entry_using_lpm(sr, ip_header->ip_src);
 
   /** Reduce the TTL count */
   ip_header->ip_ttl -= 1;
@@ -583,7 +582,6 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
   /** If there is a matched outgoing interface from routing table */
   if (routing_entry){
     struct sr_if *outgoing_interface = sr_get_interface(sr, routing_entry->interface);
-    struct sr_if *source_interface = sr_get_interface(sr, routing_entry2->interface);
 
     /* Swap the source MAC addresses */
     memcpy(ethernet_header->ether_shost, outgoing_interface->addr, ETHER_ADDR_LEN);
@@ -610,7 +608,7 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
 
     } else {
 	    printf("Cache missed!\n");
-      struct sr_arpreq *arp_request = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name); /** source_interface->name and interface doesn't work doesn't work*/
+      struct sr_arpreq *arp_request = sr_arpcache_queuereq(&(sr->cache), ip_header->ip_dst, packet, len, outgoing_interface->name);
       handle_arpreq(sr, arp_request);
     }
   }
