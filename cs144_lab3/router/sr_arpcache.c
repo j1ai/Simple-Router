@@ -122,6 +122,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             request->sent = cur_time;
             request->times_sent += 1;
 
+            /** Create new packet */
             int arp_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
             uint8_t *arp_packet = malloc(arp_packet_len);
 
@@ -143,9 +144,11 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq *request) {
             arp_packet_arp_headers->ar_pln = 4;
             arp_packet_arp_headers->ar_op  = htons(arp_op_request);
 
+            /** Set up ARP src ip and mac address*/
             memcpy(arp_packet_arp_headers->ar_sha, src_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
             arp_packet_arp_headers->ar_sip = src_interface->ip;
 
+            /** Set up ARP dst ip and mac address*/
             for (i = 0; i < ETHER_ADDR_LEN; i++) {
                 arp_packet_arp_headers->ar_tha[i] = 255;
             }
