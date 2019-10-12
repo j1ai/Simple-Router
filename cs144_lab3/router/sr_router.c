@@ -590,7 +590,6 @@ void sr_handle_foreign_ip_packet(struct sr_instance *sr, uint8_t *packet, unsign
     struct sr_if *outgoing_interface = sr_get_interface(sr, routing_entry->interface);
 
     printf(outgoing_interface->name);
-    printf(source_interface->name);
     printf("\n");
 
     /* Swap the source MAC addresses */
