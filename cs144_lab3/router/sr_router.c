@@ -498,8 +498,8 @@ void sr_handle_host_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
 
 
   /** Set up the headers */
-  sr_setup_new_ethernet_headers(new_ethernet_header, client_interface->addr, server_interface->addr, htons(ethertype_ip));
-  sr_setup_new_ip_headers(new_ip_header, sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t), ip_protocol_icmp, server_interface->ip, client_interface->ip);
+  sr_setup_new_ethernet_headers(new_ethernet_header, ethernet_header->ether_dhost, ethernet_header->ether_shost, htons(ethertype_ip));
+  sr_setup_new_ip_headers(new_ip_header, sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t), ip_protocol_icmp, server_interface->ip, ip_header->ip_src);
   sr_setup_new_icmp3_headers(new_icmp_header, ip_header, 3, 1);
 
   /** Send the packet */
