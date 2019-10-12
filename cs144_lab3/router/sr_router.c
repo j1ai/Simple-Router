@@ -361,7 +361,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
     struct sr_arpentry *arp_cache_entry = sr_arpcache_lookup(&(sr->cache), new_ip_dst);
     if (arp_cache_entry == NULL) {
       printf("No ARP entry for the client's IP address!!\n");
-      struct sr_arpreq *arp_request = sr_arpcache_queuereq(&(sr->cache), new_ip_dst, packet, len, interface);
+      sr_arpcache_queuereq(&(sr->cache), new_ip_dst, packet, len, interface);
       printf("Sent ARP request to client!\n");
 
     } else {
@@ -373,8 +373,7 @@ void sr_handle_icmp_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned 
       }
     }
   } else {
-    /* TODO: Do something if it is not a ECHO request*/
-    fprintf(stderr, "TODO: Cannot handle non-ECHO request packets!\n");
+    fprintf(stderr, "ERROR: Cannot handle non-ECHO request packets!\n");
   }
 }
 
@@ -420,7 +419,6 @@ void sr_handle_net_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packet
   /* Get the headers */
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
-  sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
   /** The port we will be sending out the response */
   struct sr_if *out_iface = sr_get_interface(sr, interface);
@@ -461,7 +459,6 @@ void sr_handle_port_unreachable_ip_packet(struct sr_instance *sr, uint8_t *packe
   /** Get the ethernet header */
   sr_ethernet_hdr_t *ethernet_header = (sr_ethernet_hdr_t *) packet;
   sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
-  sr_icmp_t3_hdr_t *icmp_header = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
   /** Creating new packet */
   int new_packet_len = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
